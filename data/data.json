@@ -1,7 +1,7 @@
 {
 "id": "vtv1",
 "name": "VTV1",
-"group": "VTV; Kênh thiết yếu", 
+"group": "VTV"; "Kênh thiết yếu", 
 "image": {
     "display": "cover",
     "shape": "square",
