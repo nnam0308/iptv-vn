@@ -14,21 +14,19 @@
     <!-- HLS.js -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
-    <!-- Google Cast SDK (Bắt buộc cho chức năng Cast) -->
+    <!-- Google Cast SDK -->
     <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 
     <style>
         :root {
-            --bg-body: #0f172a;
-            --bg-header: #0f172a;
+            --bg-body: #191919;
+            --bg-header: #191919;
             --bg-card: #1e293b;
             --bg-hover: #334155;
             --primary-red: #dc2626;
             --text-main: #ffffff;
             --text-muted: #94a3b8;
             --border-color: #334155;
-            
-            /* Player Specs */
             --control-bg: rgba(255, 255, 255, 0.12);
             --control-blur: 1.125rem;
             --btn-size: 40px;
@@ -43,7 +41,8 @@
             background-color: var(--bg-body);
             color: var(--text-main);
             min-height: 100vh;
-            display: flex; flex-direction: column;
+            display: flex;
+            flex-direction: column;
             /* overflow: hidden; Removed as requested */
         }
 
@@ -61,6 +60,8 @@
         /* --- LAYOUT UTILS --- */
         .header-content { 
             width: 100%; 
+            max-width: 1400px; /* Giới hạn chiều rộng header để đồng bộ */
+            margin: 0 auto; /* Căn giữa nội dung header */
             padding: 0 2rem; 
             display: flex; 
             justify-content: space-between; 
@@ -78,10 +79,20 @@
 
         /* --- HEADER --- */
         .app-header {
-            background-color: var(--bg-header); border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-header); 
+            border-bottom: 1px solid var(--border-color);
             position: sticky; top: 0; z-index: 50; height: 64px; 
             width: 100%; 
+            transition: background-color 0.3s ease, backdrop-filter 0.3s ease;
         }
+        
+        .app-header.scrolled {
+            background: rgba(25, 25, 25, 0.2);
+            backdrop-filter: saturate(180%) blur(1.25rem);
+            -webkit-backdrop-filter: saturate(180%) blur(1.25rem);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
         .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary-red); display: flex; align-items: center; text-decoration: none; }
         .logo span { color: white; }
         .search-container {
@@ -91,22 +102,22 @@
         .search-input { background: transparent; border: none; color: white; padding: 0.25rem; width: 150px; font-family: inherit; font-weight: inherit; }
         .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: orange; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
 
-        /* --- MAIN AREA --- */
+        /* --- MAIN AREA (CENTERED LAYOUT FIX) --- */
         .app-main { 
             padding: 1.5rem 2rem; 
             flex-grow: 1; 
             width: 100%;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            /* overflow-y: auto; Removed to allow body scroll */
+            align-items: center; /* QUAN TRỌNG: Căn giữa các section con */
         }
         
         .hero-section { 
             width: 100%;
-            max-width: 1280px; 
+            max-width: 1280px; /* Giới hạn độ rộng tối đa để đẹp mắt trên màn lớn */
             display: flex;
             flex-direction: column;
+            align-items: center; /* Căn giữa nội dung bên trong hero */
             gap: 1.5rem; 
             margin-bottom: 2rem; 
         }
@@ -116,6 +127,7 @@
             flex-direction: column; 
             gap: 1rem; 
             width: 100%;
+            align-items: center; /* Căn giữa Video và Info Card */
         }
 
         /* --- CUSTOM PLAYER CSS --- */
@@ -126,19 +138,20 @@
             max-width: 100%;
             max-height: 70vh; 
             aspect-ratio: 16 / 9;
-            margin: 0 auto; 
+            /* margin: 0 auto; -> Đã được xử lý bởi align-items: center của cha */
             background-color: black;
             border-radius: 0.75rem;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            cursor: none; 
         }
+        .custom-player-wrapper.active-cursor { cursor: default; }
+
         .custom-player-wrapper.fullscreen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; border-radius: 0;
             max-width: none; max-height: none;
         }
         video { width: 100%; height: 100%; object-fit: contain; display: block; cursor: pointer; }
-
-        /* Watermark Logo - Removed */
 
         /* Loader */
         .player-loader {
@@ -155,12 +168,15 @@
             position: absolute; bottom: 0; left: 0; right: 0;
             padding: 0 0 10px 0;
             background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-            opacity: 0; transition: opacity 0.3s;
+            opacity: 1; 
+            transition: opacity 0.3s;
             display: flex; flex-direction: column;
             z-index: 20; 
         }
-        .custom-player-wrapper:hover .controls-layer,
-        .custom-player-wrapper.paused .controls-layer { opacity: 1; }
+        .custom-player-wrapper.hide-controls .controls-layer { 
+            opacity: 0; 
+            pointer-events: none; 
+        }
 
         /* 1. Progress Bar */
         .progress-container {
@@ -262,6 +278,16 @@
         .custom-player-wrapper.is-timeshift .back-to-live-btn { display: flex; }
         .custom-player-wrapper.is-timeshift .time-display { display: none; }
 
+        /* Live Badge Minimized */
+        .live-overlay-minimized {
+            position: absolute; bottom: 20px; left: 20px;
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(0,0,0,0.6); padding: 6px 12px; border-radius: 4px;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 18;
+        }
+        .live-overlay-minimized span { font-size: 0.8rem; font-weight: 700; color: white; text-transform: uppercase; }
+        .custom-player-wrapper.hide-controls:not(.is-timeshift) .live-overlay-minimized { opacity: 1; }
+
         /* Right Controls */
         .controls-right {
             display: flex; align-items: center;
@@ -276,9 +302,8 @@
         }
         .btn-right:hover { background: rgba(255,255,255,0.1); }
         
-        /* Cast Button Specific - Hiển thị kể cả khi chưa active để user thấy */
+        /* Cast Button */
         #btn-cast { display: flex; } 
-        /* google-cast-launcher { width: 24px; height: 24px; opacity: 0; position: absolute; } */
 
         /* Quality Menu */
         .quality-wrapper { position: relative; height: 100%; display: flex; align-items: center; }
@@ -299,11 +324,14 @@
         .quality-item:hover { background: rgba(255,255,255,0.1); color: white; }
         .quality-item.active { color: var(--primary-red); background: rgba(220, 38, 38, 0.1); font-weight: 600; }
 
-        /* Info & List */
+        /* Info & List (CĂN GIỮA INFO CARD) */
         .program-info-card {
             background-color: var(--bg-card); border: 1px solid var(--border-color);
             border-radius: 0.75rem; padding: 1rem; display: flex; gap: 1rem; align-items: center;
-            width: 100%; max-width: 1280px; margin-top: 1rem;
+            width: 100%; 
+            /* Căn theo kích thước player nếu player nhỏ hơn max-width */
+            /* max-width: 100%; -> Đã có width 100% trong parent player-area */
+            margin-top: 0; /* Xóa margin top vì parent đã có gap */
         }
         .channel-logo-img { 
             width: 80px; min-width: 80px; max-width: 80px; height: auto; 
@@ -313,7 +341,13 @@
         .program-title { font-size: 1.25rem; font-weight: 700; color: white; margin-bottom: 4px; }
         .program-desc { color: var(--text-muted); font-size: 0.875rem; }
 
-        .group-section { margin-bottom: 2rem; width: 100%; max-width: 1280px; }
+        .group-section { 
+            margin-bottom: 2rem; 
+            width: 100%; 
+            max-width: 1280px; /* Căn giữa list kênh bằng max-width */
+            margin-left: auto; /* Tự động margin trái */
+            margin-right: auto; /* Tự động margin phải */
+        }
         .group-title { font-size: 1.25rem; font-weight: 700; border-left: 4px solid var(--primary-red); padding-left: 0.75rem; margin-bottom: 1rem; }
         
         .channel-list { 
@@ -323,14 +357,15 @@
             padding-bottom: 1rem;
         }
         
+        /* Container chung cho list kênh (ĐÃ CĂN GIỮA) */
         #channel-container {
             width: 100%;
             min-height: 200px;
             padding: 2rem;
-            margin: 0 auto;
+            margin: 0 auto; /* Căn giữa container này trong main */
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: center; /* Căn giữa nội dung bên trong (group-section) */
         }
 
         @media (max-width: 768px) {
@@ -364,7 +399,7 @@
 </head>
 <body>
 
-    <header class="app-header">
+    <header class="app-header" id="app-header">
         <div class="header-content">
             <a href="#" class="logo">
                 <span class="material-symbols-rounded" style="margin-right:0.5rem; color:var(--primary-red);">live_tv</span>
@@ -381,73 +416,49 @@
     <main class="app-main">
         <section class="hero-section">
             
-            <!-- CUSTOM PLAYER AREA -->
+            <!-- CUSTOM PLAYER AREA (Đã căn giữa) -->
             <div class="player-area">
-                <div class="custom-player-wrapper paused" id="video-wrapper">
+                <div class="custom-player-wrapper paused active-cursor" id="video-wrapper">
                     <video id="custom-video" poster="https://via.placeholder.com/800x450?text=StreamGO" autoplay muted></video>
                     
                     <div class="player-loader" id="player-loader">
                         <span class="material-symbols-rounded spinner">progress_activity</span>
                     </div>
 
+                    <div class="live-overlay-minimized">
+                        <div class="live-dot"></div>
+                        <span>Trực tiếp</span>
+                    </div>
+
                     <div class="controls-layer">
-                        
-                        <!-- 1. Progress Bar -->
                         <div class="progress-container" id="progress-bar">
                             <div class="progress-fill" id="fill-bar">
                                 <div class="progress-handle"></div>
                             </div>
                         </div>
 
-                        <!-- 2. Controls Main -->
                         <div class="controls-row">
-                            
-                            <!-- Left Controls -->
                             <div class="controls-left">
-                                <button class="cp-btn btn-play" id="btn-play">
-                                    <span class="material-symbols-rounded">play_arrow</span>
-                                </button>
+                                <button class="cp-btn" id="btn-play"><span class="material-symbols-rounded filled">play_arrow</span></button>
                                 <div class="volume-container">
-                                    <button class="cp-btn btn-volume" id="btn-mute">
-                                        <span class="material-symbols-rounded">volume_up</span>
-                                    </button>
-                                    <div class="volume-slider-wrap">
-                                        <input type="range" min="0" max="1" step="0.05" value="1" class="volume-slider" id="vol-slider">
-                                    </div>
+                                    <button class="cp-btn" id="btn-mute"><span class="material-symbols-rounded">volume_up</span></button>
+                                    <div class="volume-slider-wrap"><input type="range" min="0" max="1" step="0.05" value="1" class="volume-slider" id="vol-slider"></div>
                                 </div>
-
-                                <!-- Live Control Group -->
                                 <div class="live-control-group">
-                                    <div class="live-indicator" id="live-indicator">
-                                        <div class="live-dot"></div>
-                                        TRỰC TIẾP
-                                    </div>
-                                    <div class="back-to-live-btn" id="back-to-live-btn">
-                                        <span id="timeshift-val">-00:00</span> / TỚI TRỰC TIẾP
-                                    </div>
+                                    <div class="live-indicator" id="live-indicator"><div class="live-dot"></div>TRỰC TIẾP</div>
+                                    <div class="back-to-live-btn" id="back-to-live-btn"><span id="timeshift-val">-00:00</span> / TỚI TRỰC TIẾP</div>
                                 </div>
                             </div>
 
-                            <!-- Right Controls -->
                             <div class="controls-right">
                                 <div class="quality-wrapper">
-                                    <button class="cp-btn btn-right" id="btn-quality">Auto</button>
+                                    <button class="cp-btn" id="btn-quality" style="width: auto; padding: 0 10px; border-radius: 20px; font-size: 0.75rem;">Auto</button>
                                     <div class="quality-menu" id="quality-menu"></div>
                                 </div>
-                                <button class="cp-btn btn-right" id="btn-pip" title="Picture in Picture">
-                                    <span class="material-symbols-rounded">branding_watermark</span>
-                                </button>
-                                
-                                <!-- Google Cast Button -->
-                                <button class="cp-btn btn-right" id="btn-cast" title="Cast to TV" style="display: flex;">
-                                    <span class="material-symbols-rounded">cast</span>
-                                </button>
-
-                                <button class="cp-btn btn-right" id="btn-fs" title="Toàn màn hình">
-                                    <span class="material-symbols-rounded">fullscreen</span>
-                                </button>
+                                <button class="cp-btn" id="btn-pip" title="Picture in Picture"><span class="material-symbols-rounded">branding_watermark</span></button>
+                                <button class="cp-btn" id="btn-cast" title="Cast to TV" style="display: flex;"><span class="material-symbols-rounded">cast</span></button>
+                                <button class="cp-btn" id="btn-fs" title="Toàn màn hình"><span class="material-symbols-rounded">fullscreen</span></button>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -462,8 +473,8 @@
             </div>
         </section>
 
-        <!-- List Kênh -->
-        <div id="channel-container" style="width: 100%; max-width: 1280px; min-height:200px; padding: 2rem;">
+        <!-- List Kênh (Đã căn giữa) -->
+        <div id="channel-container">
             <div class="state-container"><span class="material-symbols-rounded spinner" style="color:red">progress_activity</span></div>
         </div>
     </main>
@@ -492,6 +503,8 @@
         const btnQuality = document.getElementById('btn-quality');
         const qualityMenu = document.getElementById('quality-menu');
         
+        const appHeader = document.getElementById('app-header');
+
         let hls = null;
         let globalData = [];
         let channelMap = {};
@@ -500,6 +513,8 @@
         let isUserSeeking = false;
         let hasUserSeeked = false;
         let globalEPGData = null; 
+        
+        let inactivityTimeout;
 
         // --- GOOGLE CAST SETUP ---
         let castSession = null;
@@ -518,7 +533,6 @@
                 autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
             });
 
-            // Lắng nghe sự thay đổi trạng thái Cast
             castContext.addEventListener(
                 cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
                 function(event) {
@@ -526,25 +540,22 @@
                         case cast.framework.SessionState.SESSION_STARTED:
                         case cast.framework.SessionState.SESSION_RESUMED:
                             castSession = castContext.getCurrentSession();
-                            btnCast.querySelector('span').classList.add('filled'); // Icon active
-                            // Nếu đang phát video, gửi luồng ngay
+                            btnCast.querySelector('span').classList.add('filled');
                             if (currentStreamUrl) {
                                 loadMediaToCast(currentStreamUrl, document.getElementById('name-display').innerText);
                             }
                             break;
                         case cast.framework.SessionState.SESSION_ENDED:
                             castSession = null;
-                            btnCast.querySelector('span').classList.remove('filled'); // Icon inactive
+                            btnCast.querySelector('span').classList.remove('filled');
                             break;
                     }
                 }
             );
         }
 
-        // Sự kiện click nút Cast
         btnCast.addEventListener('click', function() {
             if (castContext) {
-                // Mở dialog Cast của Chrome
                 castContext.requestSession().then(
                     function(errorCode) { console.log('Connect Success'); },
                     function(error) { console.log('Connect Error:', error); }
@@ -554,16 +565,14 @@
             }
         });
 
-        // Hàm gửi luồng HLS tới TV
         function loadMediaToCast(url, title) {
             if (!castSession) return;
 
-            const mediaInfo = new chrome.cast.media.MediaInfo(url, 'application/x-mpegURL'); // HLS mime type
-            mediaInfo.streamType = chrome.cast.media.StreamType.LIVE; // IPTV là Live stream
+            const mediaInfo = new chrome.cast.media.MediaInfo(url, 'application/x-mpegURL'); 
+            mediaInfo.streamType = chrome.cast.media.StreamType.LIVE; 
             mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
             mediaInfo.metadata.title = title || "Live Stream";
             
-            // Lấy ảnh logo nếu có
             const logoSrc = document.getElementById('logo-display').src;
             if (logoSrc && !logoSrc.includes('placeholder')) {
                 mediaInfo.metadata.images = [{url: logoSrc}];
@@ -584,11 +593,8 @@
             hasUserSeeked = false; 
             updateLiveState(true);
 
-            // Kiểm tra xem có đang Cast không? Nếu có thì gửi luồng lên TV luôn
             if (castSession) {
                 loadMediaToCast(url, document.getElementById('name-display').innerText);
-                // Có thể stop local player hoặc để chạy song song tùy ý
-                // Ở đây ta cứ để local player chạy bình thường
             }
 
             if (Hls.isSupported()) {
@@ -634,7 +640,44 @@
             }
         }
 
-        // --- VOLUME LOGIC MỚI ---
+        // --- AUTO HIDE CONTROLS LOGIC ---
+        function showControls() {
+            wrapper.classList.remove('hide-controls');
+            wrapper.classList.add('active-cursor');
+            resetInactivityTimer();
+        }
+
+        function hideControls() {
+            if (!video.paused) {
+                wrapper.classList.add('hide-controls');
+                wrapper.classList.remove('active-cursor');
+            }
+        }
+
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimeout);
+            inactivityTimeout = setTimeout(hideControls, 3000);
+        }
+
+        wrapper.addEventListener('mousemove', showControls);
+        wrapper.addEventListener('click', showControls);
+        wrapper.addEventListener('touchstart', showControls);
+        wrapper.addEventListener('keydown', showControls);
+
+        video.addEventListener('pause', () => {
+            clearTimeout(inactivityTimeout);
+            wrapper.classList.remove('hide-controls');
+            wrapper.classList.add('active-cursor');
+        });
+
+        video.addEventListener('play', resetInactivityTimer);
+
+        // Header Scroll
+        window.onscroll = () => {
+            appHeader.classList.toggle('scrolled', window.scrollY > 20);
+        };
+
+        // --- VOLUME LOGIC ---
         function syncVolumeUI() {
             if (video.muted) {
                 volSlider.value = 0;
@@ -903,6 +946,7 @@
             try {
                 const res = await fetch(DATA_URL);
                 let txt = await res.text();
+                // Fix JSON Syntax Error
                 txt = txt.replace(/"\s+"(?=[^:]+$)/g, ', '); 
                 let data;
                 try {
