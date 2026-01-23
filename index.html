@@ -14,6 +14,9 @@
     <!-- HLS.js -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
+    <!-- Google Cast SDK (Bắt buộc cho chức năng Cast) -->
+    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+
     <style>
         :root {
             --bg-body: #0f172a;
@@ -272,6 +275,10 @@
             font-size: 0.9rem; font-weight: 600; border-radius: 999px;
         }
         .btn-right:hover { background: rgba(255,255,255,0.1); }
+        
+        /* Cast Button Specific - Hiển thị kể cả khi chưa active để user thấy */
+        #btn-cast { display: flex; } 
+        /* google-cast-launcher { width: 24px; height: 24px; opacity: 0; position: absolute; } */
 
         /* Quality Menu */
         .quality-wrapper { position: relative; height: 100%; display: flex; align-items: center; }
@@ -310,11 +317,29 @@
         .group-title { font-size: 1.25rem; font-weight: 700; border-left: 4px solid var(--primary-red); padding-left: 0.75rem; margin-bottom: 1rem; }
         
         .channel-list { 
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; padding-bottom: 1rem;
+            display: grid; 
+            grid-template-columns: repeat(6, minmax(0, 1fr)); 
+            gap: 1rem; 
+            padding-bottom: 1rem;
         }
-        @media (min-width: 640px) { .channel-list { grid-template-columns: repeat(3, 1fr); } }
-        @media (min-width: 1024px) { .channel-list { grid-template-columns: repeat(4, 1fr); } }
-        @media (min-width: 1280px) { .channel-list { grid-template-columns: repeat(5, 1fr); } }
+        
+        #channel-container {
+            width: 100%;
+            min-height: 200px;
+            padding: 2rem;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            #channel-container { padding: 0.5rem; }
+            .app-main { padding: 1rem 0.5rem; }
+            .channel-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+            .program-info-card { flex-direction: column; text-align: center; gap: 0.5rem; }
+            .channel-logo-img { margin-bottom: 0.5rem; }
+        }
 
         .channel-card { width: 100%; cursor: pointer; transition: transform 0.2s; }
         .channel-card:hover { transform: scale(1.03); }
@@ -359,7 +384,6 @@
             <!-- CUSTOM PLAYER AREA -->
             <div class="player-area">
                 <div class="custom-player-wrapper paused" id="video-wrapper">
-                    <!-- VIDEO TAG: autoplay muted để trình duyệt cho phép tự chạy -->
                     <video id="custom-video" poster="https://via.placeholder.com/800x450?text=StreamGO" autoplay muted></video>
                     
                     <div class="player-loader" id="player-loader">
@@ -413,6 +437,12 @@
                                 <button class="cp-btn btn-right" id="btn-pip" title="Picture in Picture">
                                     <span class="material-symbols-rounded">branding_watermark</span>
                                 </button>
+                                
+                                <!-- Google Cast Button -->
+                                <button class="cp-btn btn-right" id="btn-cast" title="Cast to TV" style="display: flex;">
+                                    <span class="material-symbols-rounded">cast</span>
+                                </button>
+
                                 <button class="cp-btn btn-right" id="btn-fs" title="Toàn màn hình">
                                     <span class="material-symbols-rounded">fullscreen</span>
                                 </button>
@@ -458,6 +488,7 @@
         
         const btnFs = document.getElementById('btn-fs');
         const btnPip = document.getElementById('btn-pip');
+        const btnCast = document.getElementById('btn-cast');
         const btnQuality = document.getElementById('btn-quality');
         const qualityMenu = document.getElementById('quality-menu');
         
@@ -470,11 +501,95 @@
         let hasUserSeeked = false;
         let globalEPGData = null; 
 
+        // --- GOOGLE CAST SETUP ---
+        let castSession = null;
+        let castContext = null;
+
+        window['__onGCastApiAvailable'] = function(isAvailable) {
+            if (isAvailable) {
+                initializeCastApi();
+            }
+        };
+
+        function initializeCastApi() {
+            castContext = cast.framework.CastContext.getInstance();
+            castContext.setOptions({
+                receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+                autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+            });
+
+            // Lắng nghe sự thay đổi trạng thái Cast
+            castContext.addEventListener(
+                cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+                function(event) {
+                    switch (event.sessionState) {
+                        case cast.framework.SessionState.SESSION_STARTED:
+                        case cast.framework.SessionState.SESSION_RESUMED:
+                            castSession = castContext.getCurrentSession();
+                            btnCast.querySelector('span').classList.add('filled'); // Icon active
+                            // Nếu đang phát video, gửi luồng ngay
+                            if (currentStreamUrl) {
+                                loadMediaToCast(currentStreamUrl, document.getElementById('name-display').innerText);
+                            }
+                            break;
+                        case cast.framework.SessionState.SESSION_ENDED:
+                            castSession = null;
+                            btnCast.querySelector('span').classList.remove('filled'); // Icon inactive
+                            break;
+                    }
+                }
+            );
+        }
+
+        // Sự kiện click nút Cast
+        btnCast.addEventListener('click', function() {
+            if (castContext) {
+                // Mở dialog Cast của Chrome
+                castContext.requestSession().then(
+                    function(errorCode) { console.log('Connect Success'); },
+                    function(error) { console.log('Connect Error:', error); }
+                );
+            } else {
+                alert("Đang tải Google Cast API hoặc trình duyệt không hỗ trợ.");
+            }
+        });
+
+        // Hàm gửi luồng HLS tới TV
+        function loadMediaToCast(url, title) {
+            if (!castSession) return;
+
+            const mediaInfo = new chrome.cast.media.MediaInfo(url, 'application/x-mpegURL'); // HLS mime type
+            mediaInfo.streamType = chrome.cast.media.StreamType.LIVE; // IPTV là Live stream
+            mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+            mediaInfo.metadata.title = title || "Live Stream";
+            
+            // Lấy ảnh logo nếu có
+            const logoSrc = document.getElementById('logo-display').src;
+            if (logoSrc && !logoSrc.includes('placeholder')) {
+                mediaInfo.metadata.images = [{url: logoSrc}];
+            }
+
+            const request = new chrome.cast.media.LoadRequest(mediaInfo);
+            request.autoplay = true;
+
+            castSession.loadMedia(request).then(
+                function() { console.log('Cast load success'); },
+                function(errorCode) { console.log('Cast load error'); }
+            );
+        }
+
         function initHlsPlayer(url) {
             currentStreamUrl = url;
             loader.classList.add('active');
             hasUserSeeked = false; 
             updateLiveState(true);
+
+            // Kiểm tra xem có đang Cast không? Nếu có thì gửi luồng lên TV luôn
+            if (castSession) {
+                loadMediaToCast(url, document.getElementById('name-display').innerText);
+                // Có thể stop local player hoặc để chạy song song tùy ý
+                // Ở đây ta cứ để local player chạy bình thường
+            }
 
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
@@ -488,11 +603,9 @@
                     var playPromise = video.play();
                     if (playPromise !== undefined) {
                         playPromise.then(_ => {
-                            // Video đang chạy, kiểm tra xem có cần sync UI mute không
                             syncVolumeUI();
                         }).catch(error => {
                             console.log("Autoplay prevented, trying mute");
-                            // Nếu bị chặn, thử chạy mute
                             video.muted = true;
                             video.play().then(() => syncVolumeUI());
                         });
@@ -535,19 +648,18 @@
             }
         }
 
-        // Lắng nghe thay đổi volume để update UI
         video.addEventListener('volumechange', syncVolumeUI);
 
         volSlider.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
             video.volume = val;
-            if (val > 0) video.muted = false; // Kéo slider lên thì tự bật tiếng
+            if (val > 0) video.muted = false;
         });
 
         btnMute.addEventListener('click', () => {
             if (video.muted) {
                 video.muted = false;
-                if (video.volume === 0) video.volume = 1; // Nếu đang volume 0 thì bật lên max
+                if (video.volume === 0) video.volume = 1;
             } else {
                 video.muted = true;
             }
@@ -791,18 +903,13 @@
             try {
                 const res = await fetch(DATA_URL);
                 let txt = await res.text();
-                // Fix JSON Syntax Error (Missing array brackets and comma issue in 'group')
-                // 1. Fix "VTV" "Kênh" -> "VTV, Kênh" (replace quote-space-quote with quote-comma-space-quote)
                 txt = txt.replace(/"\s+"(?=[^:]+$)/g, ', '); 
-                // 2. Wrap in array if multiple objects
                 let data;
                 try {
                     data = JSON.parse(txt);
                 } catch(e) {
-                    // Fallback fix: Wrap in [] and add commas between objects
                     let f = txt.replace(/}(\s*){/g, '},$1{');
                     if(!f.startsWith('[')) f = `[${f}]`;
-                    // Double check quote fix again just in case
                     f = f.replace(/"\s+"(?=[^:]+$)/g, ', '); 
                     data = JSON.parse(f);
                 }
@@ -872,9 +979,6 @@
             document.getElementById('name-display').innerText = ch.name;
             renderEPG(); 
             
-            // Set Watermark
-            // Removed as requested
-
             if(window.innerWidth < 768) window.scrollTo(0,0);
             initHlsPlayer(ch.stream_links.url);
         }
