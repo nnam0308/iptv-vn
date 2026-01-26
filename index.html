@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Digital TV App UI</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,7 +15,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <!-- Link user provided (Note: might not work publicly as it's proprietary, fallback to Roboto) -->
     <link href="https://fonts.googleapis.com/css2?family=YouTube+Sans&display=swap" rel="stylesheet">
     
     <!-- HLS.js Library -->
@@ -23,13 +22,44 @@
     
     <style>
         body {
-            /* Priority: YouTube Sans -> Roboto -> sans-serif */
             font-family: 'YouTube Sans', 'Roboto', sans-serif;
             background: radial-gradient(66.56% 118.33% at 33.44% 31.3%, rgb(64, 64, 64) 0%, rgb(25, 25, 25) 100%);
             color: #ffffff;
             width: 100%;
             background-attachment: fixed;
+            overflow-x: hidden;
         }
+
+        /* --- Device Detection CSS Variables (CSS Media Queries Approach) --- */
+        :root {
+            --device-type: 'desktop'; /* Default */
+        }
+        
+        /* Mobile Portrait */
+        @media (max-width: 767px) and (orientation: portrait) {
+            :root { --device-type: 'mobile-portrait'; }
+        }
+        
+        /* Mobile Landscape */
+        @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+            :root { --device-type: 'mobile-landscape'; }
+        }
+
+        /* Tablet Portrait */
+        @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+            :root { --device-type: 'tablet-portrait'; }
+        }
+
+        /* Tablet Landscape */
+        @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+            :root { --device-type: 'tablet-landscape'; }
+        }
+
+        /* --- Scrollbar Styling --- */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
 
         html { scroll-behavior: smooth; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -37,15 +67,16 @@
 
         /* --- NAVIGATION STYLES --- */
         .nav-transition { transition: all 0.3s ease-in-out; }
-        .nav-default {
-            background-color: transparent;
-            border-bottom-color: transparent;
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
-            box-shadow: none;
+        
+        .bg-fixed-theme {
+            background: radial-gradient(66.56% 118.33% at 33.44% 31.3%, rgb(64, 64, 64) 0%, rgb(25, 25, 25) 100%);
+            background-attachment: fixed;
         }
+
+        .nav-default { border-bottom-color: transparent; box-shadow: none; }
+
         .nav-scrolled {
-            background-color: transparent; 
+            background-color: transparent !important; 
             backdrop-filter: saturate(180%) blur(1.25rem);
             -webkit-backdrop-filter: saturate(180%) blur(1.25rem);
             border-bottom-color: rgba(255, 255, 255, 0.1);
@@ -62,15 +93,15 @@
             background: rgba(20, 20, 20, 0.7);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.2s ease; /* Smooth hover/active */
+            transition: all 0.2s ease;
         }
         .control-glass:hover {
             background: rgba(40, 40, 40, 0.8);
             border-color: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05); /* Hover effect */
+            transform: scale(1.05);
         }
         .control-glass:active {
-            transform: scale(0.92); /* Click effect (Lún xuống) */
+            transform: scale(0.92);
             background: rgba(60, 60, 60, 0.9);
         }
 
@@ -80,9 +111,7 @@
             50% { transform: scale(1.3); }
             100% { transform: scale(1); }
         }
-        .pop-anim {
-            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        .pop-anim { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
         input[type=range].custom-range {
             -webkit-appearance: none;
@@ -110,12 +139,12 @@
         /* Quality Menu Styles */
         .quality-menu {
             position: absolute;
-            background: rgba(25, 25, 25, 0.95); /* More solid for readability */
+            background: rgba(25, 25, 25, 0.95);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             overflow: hidden;
-            display: none; /* Hidden by default */
+            display: none;
             flex-direction: column;
             min-width: 120px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
@@ -124,17 +153,9 @@
             transform: scale(0.95);
             transition: opacity 0.2s ease, transform 0.2s ease;
         }
-        /* Mobile: Menu pops DOWN from top right */
         .quality-menu-mobile { top: 100%; right: 0; margin-top: 10px; transform-origin: top right; }
-        /* Desktop: Menu pops UP from bottom */
         .quality-menu-desktop { bottom: 100%; right: 0; margin-bottom: 10px; transform-origin: bottom right; }
-        
-        /* Show State */
-        .quality-menu.show { 
-            display: flex; 
-            opacity: 1;
-            transform: scale(1);
-        }
+        .quality-menu.show { display: flex; opacity: 1; transform: scale(1); }
 
         .quality-item {
             padding: 10px 16px;
@@ -155,7 +176,7 @@
         .tab-item { 
             white-space: nowrap; 
             transition: all 0.3s ease;
-            font-weight: 600; /* Normal state: SemiBold (600) */
+            font-weight: 600; 
             font-size: 18px; 
         }
         .tab-item.active {
@@ -163,7 +184,7 @@
             color: #000000;
             border: 1px solid #ffffff; 
             box-shadow: 0 4px 6px -1px rgba(255, 255, 255, 0.2);
-            font-weight: 700; /* Active state: Bold (700) */
+            font-weight: 700;
         }
         .tab-item:not(.active):hover { 
             background-color: rgba(255, 255, 255, 0.1); 
@@ -173,7 +194,7 @@
         /* 1. CHANNEL GRID */
         .channel-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr)); /* Mobile 3 cột */
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 0.75rem;
         }
         @media (min-width: 640px) { .channel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; } }
@@ -196,14 +217,33 @@
                 aspect-ratio: auto;
             }
         }
-
-        #tabs-container {
-            background: radial-gradient(66.56% 118.33% at 33.44% 31.3%, rgb(64, 64, 64) 0%, rgb(25, 25, 25) 100%);
-            background-attachment: fixed;
+        
+        /* FIX: Specific layout for Mobile Portrait */
+        .mobile-fixed-mode body {
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .mobile-fixed-mode main {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+        .mobile-fixed-mode #main-2 {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        .mobile-fixed-mode #scrollable-content {
+            flex-grow: 1;
+            overflow-y: auto;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen landscape:h-auto landscape:overflow-y-auto">
 
     <!-- Header -->
     <header id="app-header" class="fixed top-0 w-full z-50 h-16 border-b nav-default nav-transition">
@@ -212,10 +252,8 @@
                 <div class="w-8 h-8 bg-white rounded flex items-center justify-center border border-white/10 shadow-sm transition-transform active:scale-95">
                     <i class="fas fa-play text-black text-xs"></i>
                 </div>
-                <!-- Updated Font Weights in Header -->
                 <span class="text-xl font-bold tracking-tight text-white">VNTV<span class="text-white/50 font-semibold">Go</span></span>
             </div>
-            <!-- UPDATED: Font size text-[18px] for nav items -->
             <nav class="hidden md:flex space-x-8 text-[18px] font-semibold text-white/60">
                 <a href="#" class="text-white hover:text-white transition hover:scale-105">Trang chủ</a>
                 <a href="#" class="hover:text-white transition hover:scale-105">Truyền hình</a>
@@ -231,178 +269,88 @@
         </div>
     </header>
 
-    <main class="flex-grow pt-16 w-full px-[5%] flex flex-col">
+    <main class="pt-16 w-full px-[5%]">
         
-        <!-- MAIN 1: PLAYER AREA -->
         <section id="main-1" class="w-full flex-shrink-0 mt-4">
             <div class="player-wrapper">
                 <div id="video-container" class="relative w-auto h-auto max-w-full max-h-full aspect-video bg-transparent overflow-hidden shadow-2xl border border-white/10 group select-none rounded-xl flex justify-center items-center">
-                    
-                    <!-- Placeholder / Loading -->
                     <div id="video-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-transparent z-10">
                         <div class="text-center">
                             <i class="fas fa-circle-notch fa-spin text-4xl text-white mb-4"></i>
                             <p id="loading-text" class="text-white/50 text-sm font-semibold">Đang tải dữ liệu...</p>
                         </div>
                     </div>
-                    
                     <video id="main-video-player" class="w-full h-full object-contain cursor-pointer" playsinline autoplay muted poster=""></video>
-
-                    <!-- CUSTOM CONTROLS OVERLAY -->
                     <div id="custom-controls" class="absolute inset-0 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-b from-black/60 via-transparent to-black/80">
-                        
-                        <!-- =========================
-                             MOBILE LAYOUT (< 768px) 
-                             ========================= -->
+                        <!-- Controls contents preserved from previous steps... -->
                         <div class="md:hidden flex flex-col justify-between h-full p-4 relative">
-                            <!-- Top: Volume (Left) - Settings (Right) -->
                             <div class="flex justify-between items-start w-full relative z-30">
                                 <div class="group/vol control-glass h-10 rounded-full flex items-center transition-all duration-300 ease-out w-10 hover:w-[150px] overflow-hidden">
-                                    <!-- Added active:scale-90 for click effect -->
-                                    <button class="js-mute-btn w-10 h-10 flex items-center justify-center text-white transition active:scale-90 z-10 relative flex-shrink-0">
-                                        <span class="material-symbols-rounded">volume_up</span>
-                                    </button>
-                                    <div class="w-0 group-hover/vol:w-[100px] overflow-hidden transition-all duration-300 h-full flex items-center opacity-0 group-hover/vol:opacity-100 pr-3">
-                                        <input type="range" class="js-volume-slider custom-range w-full" min="0" max="1" step="0.05" value="1">
-                                    </div>
+                                    <button class="js-mute-btn w-10 h-10 flex items-center justify-center text-white transition active:scale-90 z-10 relative flex-shrink-0"><span class="material-symbols-rounded">volume_up</span></button>
+                                    <div class="w-0 group-hover/vol:w-[100px] overflow-hidden transition-all duration-300 h-full flex items-center opacity-0 group-hover/vol:opacity-100 pr-3"><input type="range" class="js-volume-slider custom-range w-full" min="0" max="1" step="0.05" value="1"></div>
                                 </div>
-
                                 <div class="flex items-center gap-2">
                                     <div class="relative group-quality-container">
-                                        <!-- Added active:scale-90 -->
-                                        <button class="js-quality-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Chất lượng">
-                                            <!-- Added transition-transform for rotation -->
-                                            <span class="material-symbols-rounded text-[20px] transition-transform duration-300">settings</span>
-                                        </button>
-                                        <div class="quality-menu quality-menu-mobile js-quality-menu">
-                                            <!-- Items injected by JS -->
-                                        </div>
+                                        <button class="js-quality-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Chất lượng"><span class="material-symbols-rounded text-[20px] transition-transform duration-300">settings</span></button>
+                                        <div class="quality-menu quality-menu-mobile js-quality-menu"></div>
                                     </div>
-                                    <button class="js-pip-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Hình trong hình">
-                                        <span class="material-symbols-rounded text-[20px]">picture_in_picture_alt</span>
-                                    </button>
+                                    <button class="js-pip-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Hình trong hình"><span class="material-symbols-rounded text-[20px]">picture_in_picture_alt</span></button>
                                 </div>
                             </div>
-
-                            <!-- Center: Play Button -->
-                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                                <!-- Mobile Play Button: Big, Active Scale Effect -->
-                                <button class="js-play-btn pointer-events-auto w-16 h-16 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition transform hover:scale-110 active:scale-90 shadow-lg border border-white/10">
-                                    <span class="material-symbols-rounded text-4xl">play_arrow</span>
-                                </button>
-                            </div>
-
-                            <!-- Bottom: Live/Speed (Left) - Fullscreen (Right) -->
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-20"><button class="js-play-btn pointer-events-auto w-16 h-16 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition transform hover:scale-110 active:scale-90 shadow-lg border border-white/10"><span class="material-symbols-rounded text-4xl">play_arrow</span></button></div>
                             <div class="flex justify-between items-end w-full relative z-30">
                                 <div class="flex items-center gap-3">
-                                    <div class="control-glass px-3 h-9 rounded-full flex items-center justify-center gap-2 select-none">
-                                        <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]"></span>
-                                        <span class="font-bold text-xs tracking-wide text-white">TRỰC TIẾP</span>
-                                    </div>
-                                    <button class="js-speed-indicator control-glass px-3 h-9 rounded-full flex items-center justify-center font-mono text-xs text-white/70 hover:text-white transition cursor-pointer min-w-[60px] select-none active:scale-95" title="Chuyển đổi đơn vị">
-                                        0 Kb/s
-                                    </button>
+                                    <div class="control-glass px-3 h-9 rounded-full flex items-center justify-center gap-2 select-none"><span class="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]"></span><span class="font-bold text-xs tracking-wide text-white">TRỰC TIẾP</span></div>
+                                    <button class="js-speed-indicator control-glass px-3 h-9 rounded-full flex items-center justify-center font-mono text-xs text-white/70 hover:text-white transition cursor-pointer min-w-[60px] select-none active:scale-95">0 Kb/s</button>
                                 </div>
-                                <button class="js-fullscreen-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Toàn màn hình">
-                                    <span class="material-symbols-rounded">fullscreen</span>
-                                </button>
+                                <button class="js-fullscreen-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Toàn màn hình"><span class="material-symbols-rounded">fullscreen</span></button>
                             </div>
                         </div>
-
-                        <!-- =========================
-                             DESKTOP LAYOUT (>= 768px) 
-                             ========================= -->
                         <div class="hidden md:flex flex-col justify-between h-full p-6 relative">
-                            <!-- Desktop Top Left: Title -->
-                            <div class="flex items-start">
-                                <h2 id="player-channel-name-desktop" class="text-white text-xl font-bold drop-shadow-md tracking-wide">
-                                    <!-- Name injected by JS -->
-                                </h2>
-                            </div>
-
-                            <!-- Desktop Bottom Bar -->
+                            <div class="flex items-start"><h2 id="player-channel-name-desktop" class="text-white text-xl font-bold drop-shadow-md tracking-wide"></h2></div>
                             <div class="flex justify-between items-end w-full">
                                 <div class="flex items-center gap-3">
-                                    <!-- Play Button: Added active:scale-90 -->
-                                    <button class="js-play-btn control-glass w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-white transition flex-shrink-0 active:scale-90">
-                                        <span class="material-symbols-rounded">play_arrow</span>
-                                    </button>
-                                    
+                                    <button class="js-play-btn control-glass w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-white transition flex-shrink-0 active:scale-90"><span class="material-symbols-rounded">play_arrow</span></button>
                                     <div class="group/vol control-glass h-10 rounded-full flex items-center transition-all duration-300 ease-out w-10 hover:w-[130px] overflow-hidden">
-                                        <button class="js-mute-btn w-10 h-10 flex items-center justify-center hover:bg-white/10 text-white transition z-10 relative flex-shrink-0 active:scale-90">
-                                            <span class="material-symbols-rounded">volume_up</span>
-                                        </button>
-                                        <div class="w-0 group-hover/vol:w-[80px] overflow-hidden transition-all duration-300 h-full flex items-center opacity-0 group-hover/vol:opacity-100 pr-3 pl-1">
-                                            <input type="range" class="js-volume-slider custom-range w-full" min="0" max="1" step="0.05" value="1">
-                                        </div>
+                                        <button class="js-mute-btn w-10 h-10 flex items-center justify-center hover:bg-white/10 text-white transition z-10 relative flex-shrink-0 active:scale-90"><span class="material-symbols-rounded">volume_up</span></button>
+                                        <div class="w-0 group-hover/vol:w-[80px] overflow-hidden transition-all duration-300 h-full flex items-center opacity-0 group-hover/vol:opacity-100 pr-3 pl-1"><input type="range" class="js-volume-slider custom-range w-full" min="0" max="1" step="0.05" value="1"></div>
                                     </div>
-                                    
-                                    <div class="control-glass px-4 h-10 rounded-full flex items-center justify-center gap-2 select-none">
-                                        <span class="w-2.5 h-2.5 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]"></span>
-                                        <span class="font-bold text-sm tracking-wide text-white">TRỰC TIẾP</span>
-                                    </div>
-                                    
-                                    <button class="js-speed-indicator control-glass px-3 h-10 rounded-full flex items-center justify-center font-mono text-xs text-white/70 hover:text-white transition cursor-pointer min-w-[70px] select-none active:scale-95" title="Chuyển đổi Kb/s - Mb/s">
-                                        0 Kb/s
-                                    </button>
+                                    <div class="control-glass px-4 h-10 rounded-full flex items-center justify-center gap-2 select-none"><span class="w-2.5 h-2.5 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]"></span><span class="font-bold text-sm tracking-wide text-white">TRỰC TIẾP</span></div>
+                                    <button class="js-speed-indicator control-glass px-3 h-10 rounded-full flex items-center justify-center font-mono text-xs text-white/70 hover:text-white transition cursor-pointer min-w-[70px] select-none active:scale-95">0 Kb/s</button>
                                 </div>
-
                                 <div class="control-glass rounded-2xl flex items-center relative h-10">
-                                    <div class="relative h-full group-quality-container">
-                                        <!-- Quality Btn: Added active:scale-90 -->
-                                        <button class="js-quality-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white rounded-l-2xl transition active:bg-white/20" title="Chất lượng">
-                                            <span class="material-symbols-rounded transition-transform duration-300">settings</span>
-                                        </button>
-                                        <div class="quality-menu quality-menu-desktop js-quality-menu">
-                                            <!-- Items injected by JS -->
-                                        </div>
-                                    </div>
-                                    <button class="js-pip-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white transition active:bg-white/20" title="Hình trong hình">
-                                        <span class="material-symbols-rounded">picture_in_picture_alt</span>
-                                    </button>
-                                    <button class="js-fullscreen-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white rounded-r-2xl transition active:bg-white/20" title="Toàn màn hình">
-                                        <span class="material-symbols-rounded">fullscreen</span>
-                                    </button>
+                                    <div class="relative h-full group-quality-container"><button class="js-quality-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white rounded-l-2xl transition active:bg-white/20" title="Chất lượng"><span class="material-symbols-rounded transition-transform duration-300">settings</span></button><div class="quality-menu quality-menu-desktop js-quality-menu"></div></div>
+                                    <button class="js-pip-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white transition active:bg-white/20" title="Hình trong hình"><span class="material-symbols-rounded">picture_in_picture_alt</span></button>
+                                    <button class="js-fullscreen-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white rounded-r-2xl transition active:bg-white/20" title="Toàn màn hình"><span class="material-symbols-rounded">fullscreen</span></button>
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- MAIN 2: LISTS WITH PILL TABS -->
-        <section id="main-2" class="flex-grow flex flex-col">
-            <div id="tabs-container" class="relative flex items-center -mx-[5%] px-[5%] border-b pt-6 pb-2 cursor-pointer nav-default nav-transition">
+        <section id="main-2">
+            <div id="tabs-container" class="relative flex items-center -mx-[5%] px-[5%] border-b pt-6 pb-2 cursor-pointer nav-default nav-transition bg-fixed-theme">
                  <div id="category-tabs" class="flex gap-3 overflow-x-auto scrollbar-hide w-full items-center">
-                    <!-- UPDATED: Added text-[18px] -->
-                    <button class="tab-item active px-5 py-2 rounded-full bg-white text-[18px] border border-white hover:bg-white text-black flex-shrink-0 transition active:scale-95">
-                        Đang tải...
-                    </button>
+                    <button class="tab-item active px-5 py-2 rounded-full bg-white text-[18px] border border-white hover:bg-white text-black flex-shrink-0 transition active:scale-95">Đang tải...</button>
                  </div>
             </div>
 
-            <div id="loading-state" class="text-center py-12">
-                <i class="fas fa-circle-notch fa-spin text-3xl text-white"></i>
-                <p class="text-white/50 mt-2 font-medium">Đang đồng bộ danh sách kênh...</p>
-            </div>
-            
-            <div id="empty-state" class="text-center text-white/40 py-10 hidden">
-                <p id="error-message">Không thể tải dữ liệu kênh</p>
-            </div>
-
-            <div id="channel-list-wrapper" class="animate-fade-in pt-6 pb-10">
-                <div id="channel-grid" class="channel-grid"></div>
+            <div id="scrollable-content" class="portrait:custom-scrollbar">
+                <div id="loading-state" class="text-center py-12">
+                    <i class="fas fa-circle-notch fa-spin text-3xl text-white"></i>
+                    <p class="text-white/50 mt-2 font-medium">Đang đồng bộ danh sách kênh...</p>
+                </div>
+                <div id="empty-state" class="text-center text-white/40 py-10 hidden"><p id="error-message">Không thể tải dữ liệu kênh</p></div>
+                <div id="channel-list-wrapper" class="animate-fade-in py-6 pb-10"><div id="channel-grid" class="channel-grid"></div></div>
+                
+                <footer class="bg-transparent border-t border-white/10 py-8 mt-auto">
+                    <div class="container mx-auto px-4 text-center text-white/30 text-sm font-medium"><p>&copy; 2024 VNTVGo Clone v1.1.</p></div>
+                </footer>
             </div>
         </section>
     </main>
-
-    <footer class="bg-transparent border-t border-white/10 py-8 mt-auto">
-        <div class="container mx-auto px-4 text-center text-white/30 text-sm font-medium">
-            <p>&copy; 2024 VNTVGo Clone.</p>
-        </div>
-    </footer>
 
     <script>
         const DATA_URL = 'https://raw.githubusercontent.com/nnam0308/iptv/main/data/data.json';
@@ -412,68 +360,111 @@
         let hls = null;
         let speedInterval = null;
         let speedUnit = 'kb'; 
+        let deviceState = {
+            isMobile: false,
+            isTablet: false,
+            isDesktop: false,
+            orientation: 'portrait'
+        };
         
         const videoContainer = document.getElementById('video-container');
         const video = document.getElementById('main-video-player');
-        
-        const tabsContainer = document.getElementById('tabs-container');
         const header = document.getElementById('app-header');
-        
-        function bindEvent(selector, event, handler) {
-            document.querySelectorAll(selector).forEach(el => el.addEventListener(event, handler));
-        }
-        function updateAllHTML(selector, html) {
-            document.querySelectorAll(selector).forEach(el => el.innerHTML = html);
-        }
-        function updateAllText(selector, text) {
-            document.querySelectorAll(selector).forEach(el => el.textContent = text);
-        }
-        function updateAllValue(selector, value) {
-            document.querySelectorAll(selector).forEach(el => el.value = value);
+        const scrollableContent = document.getElementById('scrollable-content');
+
+        // --- DEVICE DETECTION UTILITY ---
+        // 1. User-Agent Detection (Fallback/Quick check)
+        function checkUserAgent() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            const isMobileUA = /android|ipad|iphone|ipod/i.test(ua);
+            return isMobileUA;
         }
 
-        // 1. Play/Pause with Live Sync Logic
+        // 2. JavaScript matchMedia Detection (Primary)
+        function checkLayoutMode() {
+            // Determine orientation
+            deviceState.orientation = window.matchMedia("(orientation: portrait)").matches ? 'portrait' : 'landscape';
+            
+            // Determine device type via width thresholds
+            const width = window.innerWidth;
+            deviceState.isMobile = width < 768; // Standard mobile breakpoint
+            deviceState.isTablet = width >= 768 && width < 1024;
+            deviceState.isDesktop = width >= 1024;
+
+            // Optional: Cross-check with User Agent if needed for specific logic
+            // const uaMobile = checkUserAgent(); 
+
+            // Apply layout class for Mobile Portrait fixed mode
+            if (deviceState.isMobile && deviceState.orientation === 'portrait') {
+                document.documentElement.classList.add('mobile-fixed-mode');
+            } else {
+                document.documentElement.classList.remove('mobile-fixed-mode');
+            }
+            
+            console.log("Device State Updated:", deviceState);
+        }
+        
+        // Listen for resize and load events to update device state
+        window.addEventListener('resize', checkLayoutMode);
+        window.addEventListener('load', checkLayoutMode);
+
+        function handleScrollEffect() {
+            let scrollTop = 0;
+            // Use the detected state to decide scroll logic
+            if (deviceState.isMobile && deviceState.orientation === 'portrait') {
+                scrollTop = scrollableContent.scrollTop;
+            } else {
+                scrollTop = window.scrollY;
+            }
+
+            if (scrollTop > 10) {
+                header.classList.remove('nav-default');
+                header.classList.add('nav-scrolled');
+            } else {
+                header.classList.add('nav-default');
+                header.classList.remove('nav-scrolled');
+            }
+        }
+
+        window.addEventListener('scroll', handleScrollEffect);
+        if (scrollableContent) scrollableContent.addEventListener('scroll', handleScrollEffect);
+
+        function scrollToTop() {
+            if (deviceState.isMobile && deviceState.orientation === 'portrait') {
+                scrollableContent.scrollTo({ top: 0, behavior: "smooth" });
+            } else {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+        }
+
+        function bindEvent(selector, event, handler) { document.querySelectorAll(selector).forEach(el => el.addEventListener(event, handler)); }
+        function updateAllText(selector, text) { document.querySelectorAll(selector).forEach(el => el.textContent = text); }
+        function updateAllValue(selector, value) { document.querySelectorAll(selector).forEach(el => el.value = value); }
+
         function togglePlay() {
             if (video.paused || video.ended) { 
-                if (hls && hls.liveSyncPosition) {
-                    video.currentTime = hls.liveSyncPosition;
-                } else if (video.seekable && video.seekable.length > 0) {
+                if (hls && hls.liveSyncPosition) video.currentTime = hls.liveSyncPosition;
+                else if (video.seekable && video.seekable.length > 0) {
                     const seekableEnd = video.seekable.end(video.seekable.length - 1);
-                    if (isFinite(seekableEnd)) {
-                        video.currentTime = seekableEnd;
-                    }
+                    if (isFinite(seekableEnd)) video.currentTime = seekableEnd;
                 }
                 video.play(); 
-            } else { 
-                video.pause(); 
-            }
+            } else video.pause(); 
         }
 
-        bindEvent('.js-play-btn', 'click', (e) => {
-            e.stopPropagation();
-            togglePlay();
-        });
-
-        videoContainer.addEventListener('click', (e) => {
-            if (e.target === video || e.target.id === 'custom-controls') {
-                togglePlay();
-            }
-        });
+        bindEvent('.js-play-btn', 'click', (e) => { e.stopPropagation(); togglePlay(); });
+        videoContainer.addEventListener('click', (e) => { if (e.target === video || e.target.id === 'custom-controls') togglePlay(); });
 
         video.addEventListener('play', () => { 
             document.querySelectorAll('.js-play-btn span').forEach(span => {
                 span.textContent = 'pause';
-                span.classList.remove('pop-anim'); // Reset animation
-                void span.offsetWidth; // Trigger reflow
-                span.classList.add('pop-anim');
+                span.classList.remove('pop-anim'); void span.offsetWidth; span.classList.add('pop-anim');
             });
         });
         video.addEventListener('pause', () => { 
             document.querySelectorAll('.js-play-btn span').forEach(span => {
                 span.textContent = 'play_arrow';
-                span.classList.remove('pop-anim'); 
-                void span.offsetWidth;
-                span.classList.add('pop-anim');
+                span.classList.remove('pop-anim'); void span.offsetWidth; span.classList.add('pop-anim');
             });
         });
 
@@ -482,441 +473,143 @@
             let iconText = 'volume_up';
             if (video.muted || val === 0) iconText = 'volume_off';
             else if (val < 0.5) iconText = 'volume_down';
-            
-            // Update icon text and add pop effect
             document.querySelectorAll('.js-mute-btn span').forEach(span => {
                 if(span.textContent !== iconText) {
                     span.textContent = iconText;
-                    span.classList.remove('pop-anim');
-                    void span.offsetWidth;
-                    span.classList.add('pop-anim');
+                    span.classList.remove('pop-anim'); void span.offsetWidth; span.classList.add('pop-anim');
                 }
             });
         }
 
-        bindEvent('.js-volume-slider', 'input', (e) => {
-            video.volume = e.target.value;
-            video.muted = false;
-            updateVolumeIcon();
-            updateAllValue('.js-volume-slider', e.target.value); 
-        });
-
-        bindEvent('.js-mute-btn', 'click', (e) => {
-            e.stopPropagation();
-            video.muted = !video.muted;
-            if (video.muted) updateAllValue('.js-volume-slider', 0);
-            else updateAllValue('.js-volume-slider', video.volume);
-            updateVolumeIcon();
-        });
-
-        bindEvent('.js-speed-indicator', 'click', (e) => {
-            e.stopPropagation();
-            speedUnit = speedUnit === 'kb' ? 'mb' : 'kb';
-            updateSpeedDisplay();
-        });
+        bindEvent('.js-volume-slider', 'input', (e) => { video.volume = e.target.value; video.muted = false; updateVolumeIcon(); updateAllValue('.js-volume-slider', e.target.value); });
+        bindEvent('.js-mute-btn', 'click', (e) => { e.stopPropagation(); video.muted = !video.muted; updateAllValue('.js-volume-slider', video.muted ? 0 : video.volume); updateVolumeIcon(); });
+        bindEvent('.js-speed-indicator', 'click', (e) => { e.stopPropagation(); speedUnit = speedUnit === 'kb' ? 'mb' : 'kb'; updateSpeedDisplay(); });
 
         function updateSpeedDisplay() {
-            let text = "N/A";
-            if (hls) {
-                const bandwidth = hls.bandwidthEstimate;
-                if (bandwidth && !isNaN(bandwidth)) {
-                    if (speedUnit === 'kb') {
-                        text = `${(bandwidth / 1024).toFixed(0)} Kb/s`;
-                    } else {
-                        text = `${(bandwidth / 1024 / 1024).toFixed(2)} Mb/s`;
-                    }
-                } else {
-                     text = `0 ${speedUnit === 'kb' ? 'Kb/s' : 'Mb/s'}`;
-                }
+            let text = "0 Kb/s";
+            if (hls && hls.bandwidthEstimate) {
+                const bw = hls.bandwidthEstimate;
+                text = speedUnit === 'kb' ? `${(bw / 1024).toFixed(0)} Kb/s` : `${(bw / 1024 / 1024).toFixed(2)} Mb/s`;
             }
             updateAllText('.js-speed-indicator', text);
         }
 
-        // Auto Aspect Ratio
         video.addEventListener('loadedmetadata', () => {
-            if (video.videoWidth && video.videoHeight) {
-                const ratio = video.videoWidth / video.videoHeight;
-                videoContainer.style.aspectRatio = `${ratio}`;
-            }
+            if (video.videoWidth && video.videoHeight) videoContainer.style.aspectRatio = `${video.videoWidth / video.videoHeight}`;
             document.getElementById('video-placeholder').classList.add('hidden');
         });
 
         bindEvent('.js-pip-btn', 'click', async (e) => {
             e.stopPropagation();
-            try {
-                if (document.pictureInPictureElement) { await document.exitPictureInPicture(); }
-                else if (document.pictureInPictureEnabled) { await video.requestPictureInPicture(); }
-            } catch (error) { console.error(error); }
+            try { if (document.pictureInPictureElement) await document.exitPictureInPicture(); else if (document.pictureInPictureEnabled) await video.requestPictureInPicture(); } catch (error) {}
         });
         
         bindEvent('.js-fullscreen-btn', 'click', (e) => {
             e.stopPropagation();
-            if (!document.fullscreenElement) { 
-                videoContainer.requestFullscreen().catch(err => console.log(err)); 
-            } else { 
-                document.exitFullscreen(); 
-            }
+            if (!document.fullscreenElement) videoContainer.requestFullscreen().catch(() => {}); else document.exitFullscreen();
         });
 
-        // Fullscreen Change & Auto Rotate Logic
         document.addEventListener('fullscreenchange', async () => {
-            const isFullscreen = !!document.fullscreenElement;
-            const iconText = isFullscreen ? 'close_fullscreen' : 'fullscreen';
-            document.querySelectorAll('.js-fullscreen-btn span').forEach(span => span.textContent = iconText);
-
-            // Auto-rotate logic for mobile
-            if (isFullscreen) {
-                try {
-                    // Lock to landscape if supported (mostly Android Chrome)
-                    if (screen.orientation && screen.orientation.lock) {
-                        await screen.orientation.lock('landscape');
-                    }
-                } catch (err) {
-                    console.log("Orientation lock failed/not supported:", err);
-                }
-            } else {
-                try {
-                    // Unlock orientation on exit
-                    if (screen.orientation && screen.orientation.unlock) {
-                        screen.orientation.unlock();
-                    }
-                } catch (err) {
-                    console.log("Orientation unlock failed:", err);
-                }
-            }
+            const isFS = !!document.fullscreenElement;
+            document.querySelectorAll('.js-fullscreen-btn span').forEach(span => span.textContent = isFS ? 'close_fullscreen' : 'fullscreen');
+            if (isFS && screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape').catch(() => {});
+            else if (!isFS && screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
         });
 
-        // Quality Menu Logic (Updated with rotation and sync)
         bindEvent('.js-quality-btn', 'click', (e) => {
             e.stopPropagation();
             const btn = e.target.closest('.js-quality-btn');
-            const icon = btn.querySelector('span'); // Material icon span
-            const container = btn.closest('.group-quality-container');
-            const menu = container.querySelector('.js-quality-menu');
-            
-            // Close other menus first
-            document.querySelectorAll('.js-quality-menu').forEach(m => {
-                if (m !== menu) {
-                    m.classList.remove('show');
-                    // Reset rotation of other menus
-                    const otherContainer = m.closest('.group-quality-container');
-                    if(otherContainer) {
-                        const otherIcon = otherContainer.querySelector('.js-quality-btn span');
-                        if(otherIcon) otherIcon.classList.remove('rotate-90');
-                    }
-                }
-            });
-            
-            // Toggle Rotation
-            icon.classList.toggle('rotate-90');
-            
-            // Toggle Menu
+            const menu = btn.closest('.group-quality-container').querySelector('.js-quality-menu');
+            document.querySelectorAll('.js-quality-menu').forEach(m => { if (m !== menu) m.classList.remove('show'); });
+            btn.querySelector('span').classList.toggle('rotate-90');
             menu.classList.toggle('show');
         });
         
-        // Close menu when clicking outside
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.js-quality-btn') && !e.target.closest('.js-quality-menu')) { 
-                document.querySelectorAll('.js-quality-menu').forEach(m => {
-                    m.classList.remove('show');
-                });
-                // Reset ALL rotations
-                document.querySelectorAll('.js-quality-btn span').forEach(icon => {
-                    icon.classList.remove('rotate-90');
-                });
-            }
-        });
-
-        function handleScrollEffect() {
-            if (window.scrollY > 10) {
-                header.classList.remove('nav-default');
-                header.classList.add('nav-scrolled');
-            } else {
-                header.classList.add('nav-default');
-                header.classList.remove('nav-scrolled');
-            }
-        }
-        window.addEventListener('scroll', handleScrollEffect);
-
-        function scrollToMain() {
-             const main2 = document.getElementById('main-2');
-             const offset = 64; 
-             const bodyRect = document.body.getBoundingClientRect().top;
-             const elementRect = main2.getBoundingClientRect().top;
-             const elementPosition = elementRect - bodyRect;
-             const offsetPosition = elementPosition - offset;
-
-             window.scrollTo({
-                  top: offsetPosition,
-                  behavior: "smooth"
-             });
-        }
-
-        tabsContainer.addEventListener('click', (e) => {
-            if (e.target.id === 'tabs-container' || e.target.id === 'category-tabs') {
-                scrollToMain();
+            if (!e.target.closest('.js-quality-btn') && !e.target.closest('.js-quality-menu')) {
+                document.querySelectorAll('.js-quality-menu').forEach(m => m.classList.remove('show'));
+                document.querySelectorAll('.js-quality-btn span').forEach(i => i.classList.remove('rotate-90'));
             }
         });
 
         async function initApp() {
-            try {
-                const response = await fetch(DATA_URL);
-                const rawData = await response.json();
-                processData(rawData);
-            } catch (error) {
-                console.error("Lỗi:", error);
+            try { const res = await fetch(DATA_URL); processData(await res.json()); } catch (e) {
                 document.getElementById('loading-state').classList.add('hidden');
                 document.getElementById('empty-state').classList.remove('hidden');
             }
         }
 
         function processData(data) {
-            allChannels = [];
-            uniqueGroups = new Set();
-
-            // Kiểm tra xem data là Array (cấu trúc cũ) hay Object (cấu trúc mới)
+            allChannels = []; uniqueGroups = new Set();
             if (Array.isArray(data)) {
-                // Xử lý Cấu trúc Cũ (Mảng phẳng)
                 allChannels = data;
-                data.forEach(channel => {
-                    const groups = channel.group ? channel.group.split(',').map(g => g.trim()) : ['Khác'];
-                    groups.forEach(g => uniqueGroups.add(g));
-                });
-            } else if (typeof data === 'object' && data !== null) {
-                // Xử lý Cấu trúc Mới: { "Tên Nhóm": [ { kênh }, ... ] }
-                Object.keys(data).forEach(mainGroup => {
-                    const channels = data[mainGroup];
-                    if (Array.isArray(channels)) {
-                        channels.forEach(item => {
-                            // Tạo chuỗi group tổng hợp: "Nhóm Chính, Nhóm Phụ"
-                            let combinedGroups = mainGroup;
-                            if (item.subgroup) {
-                                combinedGroups += `, ${item.subgroup}`;
-                            }
-
-                            // Chuẩn hóa object kênh về format nội bộ ứng dụng cần
-                            const normalizedChannel = {
-                                name: item.name || 'Không tên',
-                                group: combinedGroups,
-                                image: { url: item.logo || '' },       // Map 'logo' -> 'image.url'
-                                stream_links: { url: item.link || '' } // Map 'link' -> 'stream_links.url'
-                            };
-
-                            allChannels.push(normalizedChannel);
-
-                            // Thêm nhóm vào danh sách tab
-                            uniqueGroups.add(mainGroup);
-                            if (item.subgroup) {
-                                item.subgroup.split(',').forEach(sub => uniqueGroups.add(sub.trim()));
-                            }
-                        });
-                    }
-                });
+                data.forEach(ch => (ch.group ? ch.group.split(',') : ['Khác']).forEach(g => uniqueGroups.add(g.trim())));
+            } else {
+                Object.keys(data).forEach(main => data[main].forEach(item => {
+                    const norm = { name: item.name, group: item.subgroup ? `${main}, ${item.subgroup}` : main, image: { url: item.logo }, stream_links: { url: item.link } };
+                    allChannels.push(norm); uniqueGroups.add(main);
+                    if (item.subgroup) item.subgroup.split(',').forEach(s => uniqueGroups.add(s.trim()));
+                }));
             }
-
             document.getElementById('loading-state').classList.add('hidden');
-            renderTabs();
-            renderChannelGrid('Tất cả');
-            if (allChannels.length > 0) { updatePlayer(allChannels[0]); }
+            renderTabs(); renderChannelGrid('Tất cả');
+            if (allChannels.length > 0) updatePlayer(allChannels[0]);
         }
 
         function renderTabs() {
-            const tabsWrapper = document.getElementById('category-tabs');
-            tabsWrapper.innerHTML = '';
-            const allBtn = document.createElement('button');
-            // UPDATED: Added text-[18px]
-            allBtn.className = `tab-item px-5 py-2 rounded-full border border-transparent cursor-pointer flex-shrink-0 active:scale-95 transition ${currentGroup === 'Tất cả' ? 'active' : 'text-white/60 border-white/5 hover:bg-white/10 hover:text-white'}`;
-            allBtn.textContent = 'Tất cả';
-            allBtn.onclick = (e) => { 
-                e.stopPropagation(); 
-                switchTab('Tất cả', allBtn); 
-            };
-            tabsWrapper.appendChild(allBtn);
-            Array.from(uniqueGroups).sort().forEach(group => {
+            const wrap = document.getElementById('category-tabs'); wrap.innerHTML = '';
+            ['Tất cả', ...Array.from(uniqueGroups).sort()].forEach(name => {
                 const btn = document.createElement('button');
-                // UPDATED: Added text-[18px]
-                btn.className = `tab-item px-5 py-2 rounded-full border border-transparent cursor-pointer flex-shrink-0 active:scale-95 transition ${currentGroup === group ? 'active' : 'text-white/60 border-white/5 hover:bg-white/10 hover:text-white'}`;
-                btn.textContent = group;
-                btn.onclick = (e) => { 
-                    e.stopPropagation(); 
-                    switchTab(group, btn); 
-                };
-                tabsWrapper.appendChild(btn);
+                btn.className = `tab-item px-5 py-2 rounded-full border border-transparent cursor-pointer flex-shrink-0 active:scale-95 transition ${currentGroup === name ? 'active' : 'text-white/60 border-white/5 hover:bg-white/10 hover:text-white'}`;
+                btn.textContent = name;
+                btn.onclick = (e) => { e.stopPropagation(); currentGroup = name; document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderChannelGrid(name); scrollToTop(); };
+                wrap.appendChild(btn);
             });
         }
 
-        function switchTab(groupName, clickedBtn) {
-            currentGroup = groupName;
-            const buttons = document.querySelectorAll('.tab-item');
-            buttons.forEach(btn => {
-                btn.classList.remove('active');
-                btn.classList.add('text-white/60', 'border-white/5', 'hover:bg-white/10', 'hover:text-white');
+        function renderChannelGrid(group) {
+            const grid = document.getElementById('channel-grid'); grid.innerHTML = '';
+            const filtered = group === 'Tất cả' ? allChannels : allChannels.filter(ch => ch.group.split(',').map(g => g.trim()).includes(group));
+            filtered.forEach(ch => {
+                const wrap = document.createElement('div'); wrap.className = "group cursor-pointer flex flex-col gap-2 transition active:scale-[0.98]";
+                const logo = ch.image?.url ? `<img src="${ch.image.url}" class="w-1/2 h-1/2 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300">` : `<span class="text-4xl font-bold text-white/40">${ch.name.charAt(0)}</span>`;
+                wrap.innerHTML = `<div class="bg-[#191919] rounded-xl overflow-hidden relative aspect-[4/3] md:aspect-video shadow-md border border-white/5 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:border-white/20"><div class="absolute inset-0 bg-gradient-to-br from-[#191919] to-[#050506] flex items-center justify-center">${logo}</div><div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]"><div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300"><i class="fas fa-play text-black ml-1"></i></div></div></div><div class="text-center px-1"><h2 class="text-gray-400 group-hover:text-white text-[15.35px] md:text-[18px] font-bold transition-colors truncate">${ch.name}</h2></div>`;
+                wrap.onclick = () => updatePlayer(ch); grid.appendChild(wrap);
             });
-            clickedBtn.classList.remove('text-white/60', 'border-white/5', 'hover:bg-white/10', 'hover:text-white');
-            clickedBtn.classList.add('active');
-            
-            renderChannelGrid(groupName);
-            scrollToMain();
         }
 
-        function renderChannelGrid(filterGroup) {
-            const grid = document.getElementById('channel-grid');
-            grid.innerHTML = '';
-            const filteredChannels = filterGroup === 'Tất cả' 
-                ? allChannels 
-                : allChannels.filter(ch => {
-                    const groups = ch.group ? ch.group.split(',').map(g => g.trim()) : ['Khác'];
-                    return groups.includes(filterGroup);
-                });
-            if (filteredChannels.length === 0) {
-                grid.innerHTML = '<p class="text-white/50 col-span-full text-center py-8 font-semibold">Không tìm thấy kênh nào.</p>';
-                return;
-            }
-            filteredChannels.forEach(channel => { grid.appendChild(createChannelCard(channel)); });
-        }
-
-        function createChannelCard(channel) {
-            const wrapper = document.createElement('div');
-            wrapper.className = "group cursor-pointer flex flex-col gap-2 transition active:scale-[0.98]"; // Added active scale 
-            
-            const card = document.createElement('div');
-            card.className = "bg-[#191919] rounded-xl overflow-hidden relative aspect-[4/3] md:aspect-video shadow-md border border-white/5 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:border-white/20 z-0 group-hover:z-10";
-            
-            const logoUrl = channel.image?.url || '';
-            const logoHtml = logoUrl && logoUrl.length > 5
-                ? `<img src="${logoUrl}" class="w-1/2 h-1/2 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300" onerror="this.style.display='none'">`
-                : `<span class="text-4xl font-bold text-white/40 group-hover:text-white">${channel.name.charAt(0)}</span>`;
-                
-            card.innerHTML = `
-                <div class="absolute inset-0 bg-gradient-to-br from-[#191919] to-[#050506] flex items-center justify-center">
-                    ${logoHtml}
-                </div>
-                <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]">
-                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300"><i class="fas fa-play text-black ml-1"></i></div>
-                </div>
-            `;
-            
-            const nameDiv = document.createElement('div');
-            nameDiv.className = "text-center px-1";
-            // UPDATED: Font size text-[18px] for channel name
-            nameDiv.innerHTML = `<h2 class="text-gray-400 group-hover:text-white text-[15.35px] md:text-[18px] font-bold transition-colors truncate">${channel.name}</h2>`;
-
-            wrapper.appendChild(card);
-            wrapper.appendChild(nameDiv);
-            wrapper.onclick = () => updatePlayer(channel);
-            return wrapper;
-        }
-
-        function updatePlayer(channel) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            const streamUrl = channel.stream_links?.url;
-            const placeholder = document.getElementById('video-placeholder');
-            const loadingText = document.getElementById('loading-text');
-            
-            const desktopTitle = document.getElementById('player-channel-name-desktop');
-            if(desktopTitle) desktopTitle.innerText = channel.name;
-            
-            const mobileTitle = document.getElementById('player-channel-name');
-            if(mobileTitle) mobileTitle.innerText = channel.name;
-
+        function updatePlayer(ch) {
+            scrollToTop();
             if (speedInterval) clearInterval(speedInterval);
-            updateAllText('.js-speed-indicator', `0 ${speedUnit === 'kb' ? 'Kb/s' : 'Mb/s'}`);
-
-            if (!streamUrl) return;
-
-            placeholder.classList.remove('hidden');
-            loadingText.textContent = `Đang kết nối tới ${channel.name}...`;
-            
-            // Clear all menus and RESET rotation
+            document.getElementById('player-channel-name-desktop').innerText = ch.name;
+            document.getElementById('video-placeholder').classList.remove('hidden');
             document.querySelectorAll('.js-quality-menu').forEach(m => m.innerHTML = '');
-            document.querySelectorAll('.js-quality-btn span').forEach(icon => icon.classList.remove('rotate-90'));
-            document.querySelectorAll('.js-quality-menu').forEach(m => m.classList.remove('show'));
             
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
                 hls = new Hls({ enableWorker: true, lowLatencyMode: true });
-                hls.loadSource(streamUrl);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    placeholder.classList.add('hidden');
-                    video.play().catch(()=>{});
+                hls.loadSource(ch.stream_links.url); hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => { 
+                    video.play().catch(() => {});
                     generateQualityLevels(hls.levels);
                     speedInterval = setInterval(updateSpeedDisplay, 1000);
                 });
-                hls.on(Hls.Events.ERROR, (e, data) => {
-                    if (data.fatal) {
-                        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
-                        else hls.destroy();
-                    }
-                });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = streamUrl;
-                video.addEventListener('loadedmetadata', () => {
-                    placeholder.classList.add('hidden');
-                    video.play();
-                });
+                video.src = ch.stream_links.url; video.addEventListener('loadedmetadata', () => video.play());
             }
         }
 
         function generateQualityLevels(levels) {
-            const createItem = (text, isAuto, onClick) => {
-                const item = document.createElement('div');
-                item.className = 'quality-item';
-                if (isAuto) item.classList.add('active');
-                
-                const content = isAuto 
-                    ? `<span>${text}</span><span class="material-symbols-rounded text-sm ml-2">check</span>`
-                    : `<span>${text}</span>`;
-                
-                item.innerHTML = content;
-                item.onclick = onClick;
-                return item;
-            };
-
             document.querySelectorAll('.js-quality-menu').forEach(menu => {
                 menu.innerHTML = '';
-                
-                menu.appendChild(createItem('Auto', true, () => {
-                    hls.currentLevel = -1; 
-                    updateQualityUI(-1);
-                }));
-
-                levels.forEach((level, index) => {
-                    const height = level.height ? `${level.height}p` : `Level ${index}`;
-                    menu.appendChild(createItem(height, false, () => {
-                        hls.currentLevel = index; 
-                        updateQualityUI(index);
-                    }));
+                const items = [{ t: 'Auto', l: -1 }, ...levels.map((l, i) => ({ t: l.height ? `${l.height}p` : `Lv ${i}`, l: i }))];
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = `quality-item ${item.l === -1 ? 'active' : ''}`;
+                    div.innerHTML = `<span>${item.t}</span>${item.l === -1 ? '<span class="material-symbols-rounded text-sm ml-2">check</span>' : ''}`;
+                    div.onclick = () => { hls.currentLevel = item.l; menu.classList.remove('show'); document.querySelectorAll('.js-quality-btn span').forEach(i => i.classList.remove('rotate-90')); };
+                    menu.appendChild(div);
                 });
-            });
-        }
-
-        function updateQualityUI(selectedIndex) {
-            document.querySelectorAll('.js-quality-menu').forEach(menu => {
-                const items = menu.querySelectorAll('.quality-item');
-                items.forEach((item, index) => {
-                    const isAuto = selectedIndex === -1 && index === 0;
-                    const isMatch = index === (selectedIndex + 1);
-                    
-                    if (isAuto || isMatch) {
-                        item.classList.add('active');
-                        if (!item.querySelector('.material-symbols-rounded')) {
-                            item.innerHTML += '<span class="material-symbols-rounded text-sm ml-2">check</span>';
-                        }
-                    } else {
-                        item.classList.remove('active');
-                        const icon = item.querySelector('.material-symbols-rounded');
-                        if (icon) icon.remove();
-                    }
-                });
-                menu.classList.remove('show');
-                // Also reset icon rotation
-                const container = menu.closest('.group-quality-container');
-                if(container) {
-                    const icon = container.querySelector('.js-quality-btn span');
-                    if(icon) icon.classList.remove('rotate-90');
-                }
             });
         }
 
