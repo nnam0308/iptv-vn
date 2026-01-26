@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Cast Receiver</title>
+
+  <!-- Google Cast Receiver SDK -->
+  <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+
+    video {
+      width: 80%;
+      max-height: 70%;
+      background: black;
+    }
+
+    #status {
+      margin-top: 10px;
+      opacity: 0.7;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app">
+    <h2>Cast Receiver</h2>
+    <video id="video" autoplay controls></video>
+    <div id="status">Waiting for cast...</div>
+  </div>
+
+  <script>
+    const context = cast.framework.CastReceiverContext.getInstance();
+    const playerManager = context.getPlayerManager();
+
+    const video = document.getElementById("video");
+    const statusText = document.getElementById("status");
+
+    // Khi sender gửi media
+    playerManager.addEventListener(
+      cast.framework.events.EventType.LOAD,
+      event => {
+        const media = event.media;
+        const url = media.contentId;
+
+        statusText.textContent = "Playing media...";
+        video.src = url;
+        video.play();
+      }
+    );
+
+    // Lỗi phát media
+    playerManager.addEventListener(
+      cast.framework.events.EventType.ERROR,
+      () => {
+        statusText.textContent = "Playback error";
+      }
+    );
+
+    // Start receiver
+    context.start();
+  </script>
+
+</body>
+</html>
