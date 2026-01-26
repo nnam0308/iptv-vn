@@ -62,10 +62,26 @@
             background: rgba(20, 20, 20, 0.7);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease; /* Smooth hover/active */
         }
         .control-glass:hover {
             background: rgba(40, 40, 40, 0.8);
             border-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05); /* Hover effect */
+        }
+        .control-glass:active {
+            transform: scale(0.92); /* Click effect (Lún xuống) */
+            background: rgba(60, 60, 60, 0.9);
+        }
+
+        /* Animation for Play/Pause icon change */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        .pop-anim {
+            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         input[type=range].custom-range {
@@ -94,24 +110,34 @@
         /* Quality Menu Styles */
         .quality-menu {
             position: absolute;
-            background: #191919;
+            background: rgba(25, 25, 25, 0.95); /* More solid for readability */
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             overflow: hidden;
-            display: none;
+            display: none; /* Hidden by default */
             flex-direction: column;
             min-width: 120px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
             z-index: 50;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.2s ease, transform 0.2s ease;
         }
         /* Mobile: Menu pops DOWN from top right */
-        .quality-menu-mobile { top: 100%; right: 0; margin-top: 10px; }
+        .quality-menu-mobile { top: 100%; right: 0; margin-top: 10px; transform-origin: top right; }
         /* Desktop: Menu pops UP from bottom */
-        .quality-menu-desktop { bottom: 100%; right: 0; margin-bottom: 10px; }
+        .quality-menu-desktop { bottom: 100%; right: 0; margin-bottom: 10px; transform-origin: bottom right; }
         
-        .quality-menu.show { display: flex; }
+        /* Show State */
+        .quality-menu.show { 
+            display: flex; 
+            opacity: 1;
+            transform: scale(1);
+        }
+
         .quality-item {
-            padding: 8px 16px;
+            padding: 10px 16px;
             cursor: pointer;
             font-size: 13px;
             transition: background 0.2s;
@@ -119,8 +145,8 @@
             justify-content: space-between;
             align-items: center;
         }
-        .quality-item:hover { background: rgba(255,255,255,0.05); }
-        .quality-item.active { color: #ffffff; font-weight: 700; background: rgba(255,255,255,0.1); } 
+        .quality-item:hover { background: rgba(255,255,255,0.1); }
+        .quality-item.active { color: #ffffff; font-weight: 700; background: rgba(255,255,255,0.15); } 
 
         @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
         .animate-fade-in { animation: fade-in 0.3s ease-out; }
@@ -130,7 +156,7 @@
             white-space: nowrap; 
             transition: all 0.3s ease;
             font-weight: 600; /* Normal state: SemiBold (600) */
-            font-size: 18px; /* UPDATED: Font size 18px */
+            font-size: 18px; 
         }
         .tab-item.active {
             background-color: #ffffff; 
@@ -183,7 +209,7 @@
     <header id="app-header" class="fixed top-0 w-full z-50 h-16 border-b nav-default nav-transition">
         <div class="w-full px-[5%] h-full flex items-center justify-between">
             <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.reload()">
-                <div class="w-8 h-8 bg-white rounded flex items-center justify-center border border-white/10 shadow-sm">
+                <div class="w-8 h-8 bg-white rounded flex items-center justify-center border border-white/10 shadow-sm transition-transform active:scale-95">
                     <i class="fas fa-play text-black text-xs"></i>
                 </div>
                 <!-- Updated Font Weights in Header -->
@@ -191,14 +217,14 @@
             </div>
             <!-- UPDATED: Font size text-[18px] for nav items -->
             <nav class="hidden md:flex space-x-8 text-[18px] font-semibold text-white/60">
-                <a href="#" class="text-white hover:text-white transition">Trang chủ</a>
-                <a href="#" class="hover:text-white transition">Truyền hình</a>
-                <a href="#" class="hover:text-white transition">Phim truyện</a>
-                <a href="#" class="hover:text-white transition">Thể thao</a>
+                <a href="#" class="text-white hover:text-white transition hover:scale-105">Trang chủ</a>
+                <a href="#" class="hover:text-white transition hover:scale-105">Truyền hình</a>
+                <a href="#" class="hover:text-white transition hover:scale-105">Phim truyện</a>
+                <a href="#" class="hover:text-white transition hover:scale-105">Thể thao</a>
             </nav>
             <div class="flex items-center gap-4">
-                <button class="text-white/60 hover:text-white transition"><i class="fas fa-search"></i></button>
-                <div class="w-8 h-8 rounded-full bg-[#191919] overflow-hidden border border-white/10 cursor-pointer">
+                <button class="text-white/60 hover:text-white transition active:scale-90"><i class="fas fa-search"></i></button>
+                <div class="w-8 h-8 rounded-full bg-[#191919] overflow-hidden border border-white/10 cursor-pointer active:scale-95 transition">
                     <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User">
                 </div>
             </div>
@@ -232,7 +258,8 @@
                             <!-- Top: Volume (Left) - Settings (Right) -->
                             <div class="flex justify-between items-start w-full relative z-30">
                                 <div class="group/vol control-glass h-10 rounded-full flex items-center transition-all duration-300 ease-out w-10 hover:w-[150px] overflow-hidden">
-                                    <button class="js-mute-btn w-10 h-10 flex items-center justify-center text-white transition z-10 relative flex-shrink-0">
+                                    <!-- Added active:scale-90 for click effect -->
+                                    <button class="js-mute-btn w-10 h-10 flex items-center justify-center text-white transition active:scale-90 z-10 relative flex-shrink-0">
                                         <span class="material-symbols-rounded">volume_up</span>
                                     </button>
                                     <div class="w-0 group-hover/vol:w-[100px] overflow-hidden transition-all duration-300 h-full flex items-center opacity-0 group-hover/vol:opacity-100 pr-3">
@@ -242,14 +269,16 @@
 
                                 <div class="flex items-center gap-2">
                                     <div class="relative group-quality-container">
-                                        <button class="js-quality-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition" title="Chất lượng">
-                                            <span class="material-symbols-rounded text-[20px]">settings</span>
+                                        <!-- Added active:scale-90 -->
+                                        <button class="js-quality-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Chất lượng">
+                                            <!-- Added transition-transform for rotation -->
+                                            <span class="material-symbols-rounded text-[20px] transition-transform duration-300">settings</span>
                                         </button>
                                         <div class="quality-menu quality-menu-mobile js-quality-menu">
                                             <!-- Items injected by JS -->
                                         </div>
                                     </div>
-                                    <button class="js-pip-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition" title="Hình trong hình">
+                                    <button class="js-pip-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Hình trong hình">
                                         <span class="material-symbols-rounded text-[20px]">picture_in_picture_alt</span>
                                     </button>
                                 </div>
@@ -257,7 +286,8 @@
 
                             <!-- Center: Play Button -->
                             <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                                <button class="js-play-btn pointer-events-auto w-16 h-16 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition transform hover:scale-110 shadow-lg border border-white/10">
+                                <!-- Mobile Play Button: Big, Active Scale Effect -->
+                                <button class="js-play-btn pointer-events-auto w-16 h-16 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition transform hover:scale-110 active:scale-90 shadow-lg border border-white/10">
                                     <span class="material-symbols-rounded text-4xl">play_arrow</span>
                                 </button>
                             </div>
@@ -269,11 +299,11 @@
                                         <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]"></span>
                                         <span class="font-bold text-xs tracking-wide text-white">TRỰC TIẾP</span>
                                     </div>
-                                    <button class="js-speed-indicator control-glass px-3 h-9 rounded-full flex items-center justify-center font-mono text-xs text-white/70 hover:text-white transition cursor-pointer min-w-[60px] select-none" title="Chuyển đổi đơn vị">
+                                    <button class="js-speed-indicator control-glass px-3 h-9 rounded-full flex items-center justify-center font-mono text-xs text-white/70 hover:text-white transition cursor-pointer min-w-[60px] select-none active:scale-95" title="Chuyển đổi đơn vị">
                                         0 Kb/s
                                     </button>
                                 </div>
-                                <button class="js-fullscreen-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition" title="Toàn màn hình">
+                                <button class="js-fullscreen-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Toàn màn hình">
                                     <span class="material-symbols-rounded">fullscreen</span>
                                 </button>
                             </div>
@@ -293,12 +323,13 @@
                             <!-- Desktop Bottom Bar -->
                             <div class="flex justify-between items-end w-full">
                                 <div class="flex items-center gap-3">
-                                    <button class="js-play-btn control-glass w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-white transition flex-shrink-0">
+                                    <!-- Play Button: Added active:scale-90 -->
+                                    <button class="js-play-btn control-glass w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-white transition flex-shrink-0 active:scale-90">
                                         <span class="material-symbols-rounded">play_arrow</span>
                                     </button>
                                     
                                     <div class="group/vol control-glass h-10 rounded-full flex items-center transition-all duration-300 ease-out w-10 hover:w-[130px] overflow-hidden">
-                                        <button class="js-mute-btn w-10 h-10 flex items-center justify-center hover:bg-white/10 text-white transition z-10 relative flex-shrink-0">
+                                        <button class="js-mute-btn w-10 h-10 flex items-center justify-center hover:bg-white/10 text-white transition z-10 relative flex-shrink-0 active:scale-90">
                                             <span class="material-symbols-rounded">volume_up</span>
                                         </button>
                                         <div class="w-0 group-hover/vol:w-[80px] overflow-hidden transition-all duration-300 h-full flex items-center opacity-0 group-hover/vol:opacity-100 pr-3 pl-1">
@@ -311,24 +342,25 @@
                                         <span class="font-bold text-sm tracking-wide text-white">TRỰC TIẾP</span>
                                     </div>
                                     
-                                    <button class="js-speed-indicator control-glass px-3 h-10 rounded-full flex items-center justify-center font-mono text-xs text-white/70 hover:text-white transition cursor-pointer min-w-[70px] select-none" title="Chuyển đổi Kb/s - Mb/s">
+                                    <button class="js-speed-indicator control-glass px-3 h-10 rounded-full flex items-center justify-center font-mono text-xs text-white/70 hover:text-white transition cursor-pointer min-w-[70px] select-none active:scale-95" title="Chuyển đổi Kb/s - Mb/s">
                                         0 Kb/s
                                     </button>
                                 </div>
 
                                 <div class="control-glass rounded-2xl flex items-center relative h-10">
                                     <div class="relative h-full group-quality-container">
-                                        <button class="js-quality-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white rounded-l-2xl transition" title="Chất lượng">
-                                            <span class="material-symbols-rounded">settings</span>
+                                        <!-- Quality Btn: Added active:scale-90 -->
+                                        <button class="js-quality-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white rounded-l-2xl transition active:bg-white/20" title="Chất lượng">
+                                            <span class="material-symbols-rounded transition-transform duration-300">settings</span>
                                         </button>
                                         <div class="quality-menu quality-menu-desktop js-quality-menu">
                                             <!-- Items injected by JS -->
                                         </div>
                                     </div>
-                                    <button class="js-pip-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white transition" title="Hình trong hình">
+                                    <button class="js-pip-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white transition active:bg-white/20" title="Hình trong hình">
                                         <span class="material-symbols-rounded">picture_in_picture_alt</span>
                                     </button>
-                                    <button class="js-fullscreen-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white rounded-r-2xl transition" title="Toàn màn hình">
+                                    <button class="js-fullscreen-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white rounded-r-2xl transition active:bg-white/20" title="Toàn màn hình">
                                         <span class="material-symbols-rounded">fullscreen</span>
                                     </button>
                                 </div>
@@ -345,7 +377,7 @@
             <div id="tabs-container" class="relative flex items-center -mx-[5%] px-[5%] border-b pt-6 pb-2 cursor-pointer nav-default nav-transition">
                  <div id="category-tabs" class="flex gap-3 overflow-x-auto scrollbar-hide w-full items-center">
                     <!-- UPDATED: Added text-[18px] -->
-                    <button class="tab-item active px-5 py-2 rounded-full bg-white text-[18px] border border-white hover:bg-white text-black flex-shrink-0">
+                    <button class="tab-item active px-5 py-2 rounded-full bg-white text-[18px] border border-white hover:bg-white text-black flex-shrink-0 transition active:scale-95">
                         Đang tải...
                     </button>
                  </div>
@@ -431,11 +463,17 @@
         video.addEventListener('play', () => { 
             document.querySelectorAll('.js-play-btn span').forEach(span => {
                 span.textContent = 'pause';
+                span.classList.remove('pop-anim'); // Reset animation
+                void span.offsetWidth; // Trigger reflow
+                span.classList.add('pop-anim');
             });
         });
         video.addEventListener('pause', () => { 
             document.querySelectorAll('.js-play-btn span').forEach(span => {
                 span.textContent = 'play_arrow';
+                span.classList.remove('pop-anim'); 
+                void span.offsetWidth;
+                span.classList.add('pop-anim');
             });
         });
 
@@ -445,7 +483,15 @@
             if (video.muted || val === 0) iconText = 'volume_off';
             else if (val < 0.5) iconText = 'volume_down';
             
-            document.querySelectorAll('.js-mute-btn span').forEach(span => span.textContent = iconText);
+            // Update icon text and add pop effect
+            document.querySelectorAll('.js-mute-btn span').forEach(span => {
+                if(span.textContent !== iconText) {
+                    span.textContent = iconText;
+                    span.classList.remove('pop-anim');
+                    void span.offsetWidth;
+                    span.classList.add('pop-anim');
+                }
+            });
         }
 
         bindEvent('.js-volume-slider', 'input', (e) => {
@@ -540,22 +586,44 @@
             }
         });
 
-        // Quality Menu Logic
+        // Quality Menu Logic (Updated with rotation and sync)
         bindEvent('.js-quality-btn', 'click', (e) => {
             e.stopPropagation();
-            const container = e.target.closest('.group-quality-container');
+            const btn = e.target.closest('.js-quality-btn');
+            const icon = btn.querySelector('span'); // Material icon span
+            const container = btn.closest('.group-quality-container');
             const menu = container.querySelector('.js-quality-menu');
             
+            // Close other menus first
             document.querySelectorAll('.js-quality-menu').forEach(m => {
-                if (m !== menu) m.classList.remove('show');
+                if (m !== menu) {
+                    m.classList.remove('show');
+                    // Reset rotation of other menus
+                    const otherContainer = m.closest('.group-quality-container');
+                    if(otherContainer) {
+                        const otherIcon = otherContainer.querySelector('.js-quality-btn span');
+                        if(otherIcon) otherIcon.classList.remove('rotate-90');
+                    }
+                }
             });
             
+            // Toggle Rotation
+            icon.classList.toggle('rotate-90');
+            
+            // Toggle Menu
             menu.classList.toggle('show');
         });
         
+        // Close menu when clicking outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.js-quality-btn') && !e.target.closest('.js-quality-menu')) { 
-                document.querySelectorAll('.js-quality-menu').forEach(m => m.classList.remove('show'));
+                document.querySelectorAll('.js-quality-menu').forEach(m => {
+                    m.classList.remove('show');
+                });
+                // Reset ALL rotations
+                document.querySelectorAll('.js-quality-btn span').forEach(icon => {
+                    icon.classList.remove('rotate-90');
+                });
             }
         });
 
@@ -603,12 +671,49 @@
         }
 
         function processData(data) {
-            allChannels = data;
+            allChannels = [];
             uniqueGroups = new Set();
-            data.forEach(channel => {
-                const groups = channel.group ? channel.group.split(',').map(g => g.trim()) : ['Khác'];
-                groups.forEach(g => uniqueGroups.add(g));
-            });
+
+            // Kiểm tra xem data là Array (cấu trúc cũ) hay Object (cấu trúc mới)
+            if (Array.isArray(data)) {
+                // Xử lý Cấu trúc Cũ (Mảng phẳng)
+                allChannels = data;
+                data.forEach(channel => {
+                    const groups = channel.group ? channel.group.split(',').map(g => g.trim()) : ['Khác'];
+                    groups.forEach(g => uniqueGroups.add(g));
+                });
+            } else if (typeof data === 'object' && data !== null) {
+                // Xử lý Cấu trúc Mới: { "Tên Nhóm": [ { kênh }, ... ] }
+                Object.keys(data).forEach(mainGroup => {
+                    const channels = data[mainGroup];
+                    if (Array.isArray(channels)) {
+                        channels.forEach(item => {
+                            // Tạo chuỗi group tổng hợp: "Nhóm Chính, Nhóm Phụ"
+                            let combinedGroups = mainGroup;
+                            if (item.subgroup) {
+                                combinedGroups += `, ${item.subgroup}`;
+                            }
+
+                            // Chuẩn hóa object kênh về format nội bộ ứng dụng cần
+                            const normalizedChannel = {
+                                name: item.name || 'Không tên',
+                                group: combinedGroups,
+                                image: { url: item.logo || '' },       // Map 'logo' -> 'image.url'
+                                stream_links: { url: item.link || '' } // Map 'link' -> 'stream_links.url'
+                            };
+
+                            allChannels.push(normalizedChannel);
+
+                            // Thêm nhóm vào danh sách tab
+                            uniqueGroups.add(mainGroup);
+                            if (item.subgroup) {
+                                item.subgroup.split(',').forEach(sub => uniqueGroups.add(sub.trim()));
+                            }
+                        });
+                    }
+                });
+            }
+
             document.getElementById('loading-state').classList.add('hidden');
             renderTabs();
             renderChannelGrid('Tất cả');
@@ -620,7 +725,7 @@
             tabsWrapper.innerHTML = '';
             const allBtn = document.createElement('button');
             // UPDATED: Added text-[18px]
-            allBtn.className = `tab-item px-5 py-2 rounded-full border border-transparent cursor-pointer flex-shrink-0 ${currentGroup === 'Tất cả' ? 'active' : 'text-white/60 border-white/5 hover:bg-white/10 hover:text-white'}`;
+            allBtn.className = `tab-item px-5 py-2 rounded-full border border-transparent cursor-pointer flex-shrink-0 active:scale-95 transition ${currentGroup === 'Tất cả' ? 'active' : 'text-white/60 border-white/5 hover:bg-white/10 hover:text-white'}`;
             allBtn.textContent = 'Tất cả';
             allBtn.onclick = (e) => { 
                 e.stopPropagation(); 
@@ -630,7 +735,7 @@
             Array.from(uniqueGroups).sort().forEach(group => {
                 const btn = document.createElement('button');
                 // UPDATED: Added text-[18px]
-                btn.className = `tab-item px-5 py-2 rounded-full border border-transparent cursor-pointer flex-shrink-0 ${currentGroup === group ? 'active' : 'text-white/60 border-white/5 hover:bg-white/10 hover:text-white'}`;
+                btn.className = `tab-item px-5 py-2 rounded-full border border-transparent cursor-pointer flex-shrink-0 active:scale-95 transition ${currentGroup === group ? 'active' : 'text-white/60 border-white/5 hover:bg-white/10 hover:text-white'}`;
                 btn.textContent = group;
                 btn.onclick = (e) => { 
                     e.stopPropagation(); 
@@ -672,7 +777,7 @@
 
         function createChannelCard(channel) {
             const wrapper = document.createElement('div');
-            wrapper.className = "group cursor-pointer flex flex-col gap-2"; 
+            wrapper.className = "group cursor-pointer flex flex-col gap-2 transition active:scale-[0.98]"; // Added active scale 
             
             const card = document.createElement('div');
             card.className = "bg-[#191919] rounded-xl overflow-hidden relative aspect-[4/3] md:aspect-video shadow-md border border-white/5 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:border-white/20 z-0 group-hover:z-10";
@@ -694,7 +799,7 @@
             const nameDiv = document.createElement('div');
             nameDiv.className = "text-center px-1";
             // UPDATED: Font size text-[18px] for channel name
-            nameDiv.innerHTML = `<h2 class="text-gray-400 group-hover:text-white text-[18px] font-bold transition-colors truncate">${channel.name}</h2>`;
+            nameDiv.innerHTML = `<h2 class="text-gray-400 group-hover:text-white text-[15.35px] md:text-[18px] font-bold transition-colors truncate">${channel.name}</h2>`;
 
             wrapper.appendChild(card);
             wrapper.appendChild(nameDiv);
@@ -723,7 +828,10 @@
             placeholder.classList.remove('hidden');
             loadingText.textContent = `Đang kết nối tới ${channel.name}...`;
             
+            // Clear all menus and RESET rotation
             document.querySelectorAll('.js-quality-menu').forEach(m => m.innerHTML = '');
+            document.querySelectorAll('.js-quality-btn span').forEach(icon => icon.classList.remove('rotate-90'));
+            document.querySelectorAll('.js-quality-menu').forEach(m => m.classList.remove('show'));
             
             if (Hls.isSupported()) {
                 if (hls) hls.destroy();
@@ -803,6 +911,12 @@
                     }
                 });
                 menu.classList.remove('show');
+                // Also reset icon rotation
+                const container = menu.closest('.group-quality-container');
+                if(container) {
+                    const icon = container.querySelector('.js-quality-btn span');
+                    if(icon) icon.classList.remove('rotate-90');
+                }
             });
         }
 
