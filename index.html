@@ -51,6 +51,13 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* --- NAVIGATION STYLES --- */
+        #app-header {
+            background-image: url('https://images.fptplay53.net/media/photo/2026/01/21/header-web_1768982652107.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
         .nav-transition { transition: all 0.3s ease-in-out; }
         
         .bg-fixed-theme {
@@ -61,13 +68,30 @@
         .nav-default { border-bottom-color: transparent; box-shadow: none; }
 
         .nav-scrolled {
-            background-color: transparent !important; 
-            backdrop-filter: saturate(180%) blur(1.25rem);
-            -webkit-backdrop-filter: saturate(180%) blur(1.25rem);
-            border-bottom-color: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            /* Đã xóa border và shadow */
+            border-bottom-color: transparent;
+            box-shadow: none;
         }
         
+        /* Cấu hình chung cho Background Split */
+        .split-bg-common {
+            background-image: url('https://images.fptplay53.net/media/photo/OTT/2026/02/05/block-web-background_1770281046837.png');
+            background-size: 100% auto; /* Quan trọng: width 100%, height tự động theo tỷ lệ */
+            background-repeat: no-repeat;
+            width: 100%;
+            aspect-ratio: 8/1; /* 3840 / 480 = 8. Đảm bảo container cao đúng bằng nửa ảnh */
+        }
+
+        /* Footer lấy phần bottom */
+        footer {
+            background-position: bottom center;
+        }
+        
+        /* Phần trên lấy phần top */
+        #main-bg-top {
+            background-position: top center;
+        }
+
         /* === CUSTOM PLAYER STYLES === */
         .material-symbols-rounded {
             font-size: 24px;
@@ -183,8 +207,8 @@
 </head>
 <body class="min-h-screen landscape:h-auto landscape:overflow-y-auto">
 
-    <!-- Header -->
-    <header id="app-header" class="fixed top-0 w-full z-50 h-16 border-b nav-default nav-transition">
+    <!-- Header: Đã xóa class border-b -->
+    <header id="app-header" class="fixed top-0 w-full z-50 h-16 nav-default nav-transition">
         <div class="w-full px-[5%] h-full flex items-center justify-between">
             <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.reload()">
                 <div class="w-8 h-8 bg-white rounded flex items-center justify-center border border-white/10 shadow-sm transition-transform active:scale-95">
@@ -207,9 +231,11 @@
         </div>
     </header>
 
-    <main class="pt-16 w-full px-[5%]">
+    <!-- Main Content -->
+    <main class="pt-16 w-full">
         
-        <section id="main-1" class="w-full flex-shrink-0 mt-4">
+        <!-- Player Section -->
+        <section id="main-1" class="w-full flex-shrink-0 mt-4 px-[5%]">
             <div class="player-wrapper">
                 <div id="video-container" class="relative w-auto h-auto max-w-full max-h-full aspect-video bg-transparent overflow-hidden shadow-2xl border border-white/10 group select-none rounded-xl flex justify-center items-center">
                     <div id="video-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-transparent z-10">
@@ -221,7 +247,6 @@
                     <video id="main-video-player" class="w-full h-full object-contain cursor-pointer" playsinline autoplay muted poster=""></video>
                     
                     <div id="custom-controls" class="absolute inset-0 z-20 opacity-0 transition-opacity duration-300">
-                        
                         <!-- Mobile Controls -->
                         <div class="md:hidden flex flex-col justify-between h-full p-4 relative">
                             <div class="flex justify-between items-start w-full relative z-30">
@@ -243,9 +268,7 @@
                                     <div class="control-glass px-3 h-9 rounded-full flex items-center justify-center gap-2 select-none"><span class="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]"></span><span class="font-bold text-xs tracking-wide text-white">TRỰC TIẾP</span></div>
                                     <button class="js-speed-indicator control-glass px-3 h-9 rounded-full flex items-center justify-center font-mono text-xs text-white/70 hover:text-white transition cursor-pointer min-w-[60px] select-none active:scale-95">0 Kb/s</button>
                                 </div>
-                                <!-- Updated Bottom Right: Cast + Fullscreen -->
                                 <div class="flex items-center gap-2">
-                                    <!-- Cast Button Mobile: Always visible -->
                                     <button class="js-cast-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Phát lên TV"><span class="material-symbols-rounded">cast</span></button>
                                     <button class="js-fullscreen-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Toàn màn hình"><span class="material-symbols-rounded">fullscreen</span></button>
                                 </div>
@@ -268,7 +291,6 @@
                                 <div class="control-glass rounded-2xl flex items-center relative h-10">
                                     <div class="relative h-full group-quality-container"><button class="js-quality-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white rounded-l-2xl transition active:bg-white/20" title="Chất lượng"><span class="material-symbols-rounded transition-transform duration-300">settings</span></button><div class="quality-menu quality-menu-desktop js-quality-menu"></div></div>
                                     <button class="js-pip-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white transition active:bg-white/20" title="Hình trong hình"><span class="material-symbols-rounded">picture_in_picture_alt</span></button>
-                                    <!-- Cast Button Desktop: Always visible -->
                                     <button class="js-cast-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white transition active:bg-white/20" title="Phát lên TV"><span class="material-symbols-rounded">cast</span></button>
                                     <button class="js-fullscreen-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white rounded-r-2xl transition active:bg-white/20" title="Toàn màn hình"><span class="material-symbols-rounded">fullscreen</span></button>
                                 </div>
@@ -280,21 +302,26 @@
         </section>
 
         <section id="main-2">
-            <div id="tabs-container" class="relative flex items-center -mx-[5%] px-[5%] border-b pt-6 pb-2 cursor-pointer nav-default nav-transition bg-fixed-theme">
+            <!-- Tabs -->
+            <div id="tabs-container" class="relative flex items-center px-[5%] border-b pt-6 pb-2 cursor-pointer nav-default nav-transition bg-fixed-theme">
                  <div id="category-tabs" class="flex gap-3 overflow-x-auto scrollbar-hide w-full items-center">
                     <button class="tab-item active px-5 py-2 rounded-full bg-white text-[18px] border border-white hover:bg-white text-black flex-shrink-0 transition active:scale-95">Đang tải...</button>
                  </div>
             </div>
 
             <div id="scrollable-content" class="portrait:custom-scrollbar">
-                <div id="loading-state" class="text-center py-12">
+                <div id="loading-state" class="text-center py-12 px-[5%]">
                     <i class="fas fa-circle-notch fa-spin text-3xl text-white"></i>
                     <p class="text-white/50 mt-2 font-medium">Đang đồng bộ danh sách kênh...</p>
                 </div>
-                <div id="empty-state" class="text-center text-white/40 py-10 hidden"><p id="error-message">Không thể tải dữ liệu kênh</p></div>
-                <div id="channel-list-wrapper" class="animate-fade-in py-6 pb-10"><div id="channel-grid" class="channel-grid"></div></div>
+                <div id="empty-state" class="text-center text-white/40 py-10 hidden px-[5%]"><p id="error-message">Không thể tải dữ liệu kênh</p></div>
+                <div id="channel-list-wrapper" class="animate-fade-in py-6 pb-10 px-[5%]"><div id="channel-grid" class="channel-grid"></div></div>
                 
-                <footer class="bg-transparent border-t border-white/10 py-8 mt-auto">
+                <!-- NEW: Top half of background image -->
+                <div id="main-bg-top" class="split-bg-common"></div>
+
+                <!-- Footer: Bottom half of background image -->
+                <footer class="bg-transparent split-bg-common flex flex-col justify-end pb-8">
                     <div class="container mx-auto px-4 text-center text-white/30 text-sm font-medium"><p>&copy; 2024 VNTVGo Clone v1.1.</p></div>
                 </footer>
             </div>
@@ -612,7 +639,13 @@
                 const btn = document.createElement('button');
                 btn.className = `tab-item px-5 py-2 rounded-full border border-transparent cursor-pointer flex-shrink-0 active:scale-95 transition ${currentGroup === name ? 'active' : 'text-white/60 border-white/5 hover:bg-white/10 hover:text-white'}`;
                 btn.textContent = name;
-                btn.onclick = (e) => { e.stopPropagation(); currentGroup = name; document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderChannelGrid(name); scrollToTop(); };
+                btn.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    currentGroup = name; 
+                    document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active')); 
+                    btn.classList.add('active'); 
+                    renderChannelGrid(name); 
+                };
                 wrap.appendChild(btn);
             });
         }
@@ -629,7 +662,6 @@
         }
 
         function updatePlayer(ch) {
-            scrollToTop();
             currentStreamUrl = ch.stream_links.url; // Save URL for Cast
             
             if (speedInterval) clearInterval(speedInterval);
